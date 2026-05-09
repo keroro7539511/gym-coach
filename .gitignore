@@ -53,5 +53,8 @@ next-env.d.ts
 # app data
 data/gym.db
 data/gym.db-journal
+data/gym.db-shm
+data/gym.db-wal
 data/backups/
 data/pdfs/
+local.db
