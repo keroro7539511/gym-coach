@@ -3,6 +3,7 @@ import { getInBodyRecord } from "@/lib/actions/inbody";
 import { getStudent } from "@/lib/actions/students";
 import { generateBasicRecommendations } from "@/lib/recommendations/basic-inbody";
 import { RecommendationCard } from "@/components/recommendation-card";
+import { getCoachSettings } from "@/lib/coach-settings";
 
 export default async function InBodyDetailPage({
   params,
@@ -18,6 +19,7 @@ export default async function InBodyDetailPage({
   ]);
   if (!record || !student) notFound();
 
+  const settings = getCoachSettings();
   const recs = generateBasicRecommendations({
     gender: student.gender,
     goal: student.goal,
@@ -27,6 +29,8 @@ export default async function InBodyDetailPage({
       bmrKcal: record.bmrKcal,
       visceralFatLevel: record.visceralFatLevel,
     },
+    bodyFatWarnMale: settings.bodyFatWarnMale,
+    bodyFatWarnFemale: settings.bodyFatWarnFemale,
   });
 
   return (

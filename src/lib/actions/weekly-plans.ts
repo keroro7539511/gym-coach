@@ -143,6 +143,12 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
       goal: student.goal,
       isClassDay,
       bmi: latestInbody?.bmi ?? null,
+      muscleGainSteps: [
+        settings.muscleGainStepsMin,
+        settings.muscleGainStepsMax,
+      ],
+      fatLossSteps: [settings.fatLossStepsMin, settings.fatLossStepsMax],
+      fitnessSteps: [settings.fitnessStepsMin, settings.fitnessStepsMax],
     });
     const meal = dietResult.data.find((m) => m.date === d.date);
     db.insert(dailyPlans)

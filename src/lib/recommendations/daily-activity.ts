@@ -4,6 +4,10 @@ export interface DailyActivityInput {
   goal: Goal;
   isClassDay: boolean;
   bmi?: number | null;
+  // 自訂閾值（不傳則用預設）
+  muscleGainSteps?: [number, number];
+  fatLossSteps?: [number, number];
+  fitnessSteps?: [number, number];
 }
 
 export interface DailyActivityOutput {
@@ -24,7 +28,24 @@ export function recommendDailyActivity(
   input: DailyActivityInput
 ): DailyActivityOutput {
   const goalKey = input.goal === "custom" ? "fitness" : input.goal;
-  const r = RANGES[goalKey];
+  const ranges: Record<
+    "muscle_gain" | "fat_loss" | "fitness",
+    { steps: [number, number]; cardio: [number, number] }
+  > = {
+    muscle_gain: {
+      steps: input.muscleGainSteps ?? RANGES.muscle_gain.steps,
+      cardio: RANGES.muscle_gain.cardio,
+    },
+    fat_loss: {
+      steps: input.fatLossSteps ?? RANGES.fat_loss.steps,
+      cardio: RANGES.fat_loss.cardio,
+    },
+    fitness: {
+      steps: input.fitnessSteps ?? RANGES.fitness.steps,
+      cardio: RANGES.fitness.cardio,
+    },
+  };
+  const r = ranges[goalKey];
 
   // 預設取中間
   let steps = Math.round((r.steps[0] + r.steps[1]) / 2);
