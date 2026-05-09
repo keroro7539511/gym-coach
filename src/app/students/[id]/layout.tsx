@@ -36,6 +36,9 @@ export default async function StudentLayout({
         <Link href={`/students/${id}/sessions`} className="hover:underline">
           訓練紀錄
         </Link>
+        <Link href={`/students/${id}/weekly-plans`} className="hover:underline">
+          週計劃
+        </Link>
       </nav>
       <Separator className="mb-6" />
       {children}

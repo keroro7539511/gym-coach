@@ -166,8 +166,9 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
       .run();
   }
 
-  revalidatePath(`/students/${student.id}/weekly-plans`);
-  revalidatePath(`/sessions/${sessionId}`);
+  // 註：故意不在這裡呼叫 revalidatePath，因為這個 function 通常從
+  // page render 觸發（/sessions/[id]/done），而 Next 16 不允許在 render
+  // 期間呼叫 revalidatePath。後續編輯流程會在各自的 mutation 中觸發 revalidate。
 
   return weeklyPlanId;
 }
