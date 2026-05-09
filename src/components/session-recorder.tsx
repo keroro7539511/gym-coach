@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { SetRow } from "@/components/set-row";
+import { StatusBadge } from "@/components/ui/badge-status";
 import { MUSCLE_GROUP_LABEL } from "@/components/exercise-form";
 import {
   addExerciseToSession,
@@ -12,12 +13,7 @@ import {
   completeSession,
 } from "@/lib/actions/sessions";
 import { createSetLog } from "@/lib/actions/set-logs";
-import type {
-  Exercise,
-  Session,
-  SessionExercise,
-  SetLog,
-} from "@/lib/db/schema";
+import type { Exercise, Session, SessionExercise, SetLog } from "@/lib/db/schema";
 
 interface Props {
   session: Session;
@@ -42,33 +38,58 @@ export function SessionRecorder({
   const isCompleted = session.status === "completed";
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">
-          {studentName} · 第 {session.sessionNumber} 堂課
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          目標：
-          {session.targetMuscleGroups
-            .map((m) => MUSCLE_GROUP_LABEL[m] ?? m)
-            .join("、")}
-          {session.startedAt && (
-            <> · 開始 {session.startedAt.slice(11, 16)}</>
-          )}
-          {isCompleted && <> · 已完成</>}
-        </p>
+    <div className="container mx-auto px-4 md:px-6 py-8 max-w-5xl">
+      <header className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            {studentName}
+          </h1>
+          <p className="text-sm font-mono text-muted-foreground mt-1.5">
+            第 <span className="text-amber-500 font-bold">{session.sessionNumber}</span> 堂 ·{" "}
+            目標{" "}
+            <span className="text-foreground">
+              {session.targetMuscleGroups
+                .map((m) => MUSCLE_GROUP_LABEL[m] ?? m)
+                .join("、")}
+            </span>
+            {session.startedAt && (
+              <>
+                {" · "}
+                <span className="text-muted-foreground">
+                  {session.startedAt.slice(11, 16)} 開始
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        <StatusBadge variant={isCompleted ? "completed" : "live"}>
+          {isCompleted ? "已完成" : "RECORDING"}
+        </StatusBadge>
       </header>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {exercises.map(
           ({ sessionExercise, exercise, sets, weightSuggestion }) => (
-            <div key={sessionExercise.id} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-lg">{exercise.name}</h3>
+            <div
+              key={sessionExercise.id}
+              className="rounded-xl border border-border bg-[var(--surface-2)] p-5"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h3 className="text-lg font-bold">{exercise.name}</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-[var(--surface-3)] px-2 py-0.5 rounded">
+                    {MUSCLE_GROUP_LABEL[exercise.muscleGroup] ?? exercise.muscleGroup}
+                  </span>
+                  {weightSuggestion != null && !isCompleted && (
+                    <span className="text-[11px] font-mono text-amber-500">
+                      ↑ 建議 {weightSuggestion}kg
+                    </span>
+                  )}
+                </div>
                 {!isCompleted && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-rose-500 transition-colors"
                     onClick={() =>
                       startTransition(() =>
                         removeExerciseFromSession(
@@ -80,20 +101,23 @@ export function SessionRecorder({
                     disabled={pending}
                   >
                     刪除動作
-                  </Button>
+                  </button>
                 )}
               </div>
 
               <table className="w-full">
                 <thead>
-                  <tr className="text-xs text-muted-foreground">
-                    <th className="p-2">組</th>
-                    <th className="p-2">重量</th>
-                    <th className="p-2">次數</th>
-                    <th className="p-2">RPE</th>
-                    <th className="p-2">力竭</th>
-                    <th className="p-2">心率</th>
-                    <th className="p-2"></th>
+                  <tr>
+                    {["組", "重量 kg", "次數", "RPE", "力竭", "心率", ""].map(
+                      (h, i) => (
+                        <th
+                          key={i}
+                          className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground text-left pb-2 px-2 first:pl-0 last:pr-0"
+                        >
+                          {h}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -109,12 +133,11 @@ export function SessionRecorder({
               </table>
 
               {!isCompleted && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
+                <button
+                  type="button"
+                  className="mt-3 w-full border border-dashed border-border rounded-md py-3 text-xs uppercase tracking-wider font-semibold text-muted-foreground hover:border-amber-500 hover:text-amber-500 transition-colors"
+                  disabled={pending}
                   onClick={() => {
-                    // 新組數預設：繼承上一組；如果還沒有任何組，用建議重量
                     const last = sets[sets.length - 1];
                     startTransition(async () => {
                       await createSetLog({
@@ -129,38 +152,34 @@ export function SessionRecorder({
                       router.refresh();
                     });
                   }}
-                  disabled={pending}
                 >
                   + 新增一組
-                </Button>
+                </button>
               )}
             </div>
           )
         )}
 
         {!isCompleted && (
-          <div className="flex gap-3">
-            <ExercisePicker
-              exercises={allExercises}
-              onPick={async (exerciseId) => {
-                await addExerciseToSession(session.id, exerciseId);
-                router.refresh();
-              }}
-            />
-          </div>
+          <ExercisePicker
+            exercises={allExercises}
+            onPick={async (exerciseId) => {
+              await addExerciseToSession(session.id, exerciseId);
+              router.refresh();
+            }}
+          />
         )}
       </div>
 
       {!isCompleted && (
-        <div className="mt-8 pt-6 border-t">
+        <div className="mt-10 pt-6 border-t border-[var(--border-subtle)] flex justify-end">
           <Button
             size="lg"
+            className="uppercase tracking-[0.15em] font-extrabold"
             onClick={() =>
               startTransition(async () => {
                 if (
-                  !confirm(
-                    "確定要結束這堂課嗎？結束後就不能再加 / 改紀錄。"
-                  )
+                  !confirm("確定要結束這堂課嗎？結束後就不能再加 / 改紀錄。")
                 )
                   return;
                 await completeSession(session.id);
