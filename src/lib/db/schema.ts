@@ -144,3 +144,73 @@ export type SessionExercise = typeof sessionExercises.$inferSelect;
 export type NewSessionExercise = typeof sessionExercises.$inferInsert;
 export type SetLog = typeof setLogs.$inferSelect;
 export type NewSetLog = typeof setLogs.$inferInsert;
+
+// ─── 週計劃相關 ─────────────────────────────────────────
+
+export const weeklyPlans = sqliteTable("weekly_plans", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  studentId: integer("student_id")
+    .notNull()
+    .references(() => students.id),
+  sourceSessionId: integer("source_session_id")
+    .notNull()
+    .references(() => sessions.id),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  coachOverallMessage: text("coach_overall_message"),
+  pdfPath: text("pdf_path"),
+  status: text("status", { enum: ["draft", "approved"] })
+    .notNull()
+    .default("draft"),
+  generatedAt: text("generated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const dailyPlans = sqliteTable("daily_plans", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  weeklyPlanId: integer("weekly_plan_id")
+    .notNull()
+    .references(() => weeklyPlans.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sun ... 6=Sat
+  isClassDay: integer("is_class_day", { mode: "boolean" }).notNull().default(false),
+  walkingStepsTarget: integer("walking_steps_target"),
+  cardioMinutesTarget: integer("cardio_minutes_target"),
+  mealBreakfast: text("meal_breakfast"),
+  mealLunch: text("meal_lunch"),
+  mealDinner: text("meal_dinner"),
+  mealSnacks: text("meal_snacks"),
+  waterTargetMl: integer("water_target_ml"),
+  sleepTargetHoursMin: integer("sleep_target_hours_min"),
+  sleepTargetHoursMax: integer("sleep_target_hours_max"),
+  extraExercises: text("extra_exercises", { mode: "json" }).$type<
+    { exerciseId: number | null; name: string; sets: number; reps: number }[]
+  >(),
+  coachMessage: text("coach_message"),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const coachSettings = sqliteTable("coach_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  // 規則參數
+  muscleGainStepsMin: integer("muscle_gain_steps_min").notNull().default(5000),
+  muscleGainStepsMax: integer("muscle_gain_steps_max").notNull().default(7000),
+  fatLossStepsMin: integer("fat_loss_steps_min").notNull().default(8000),
+  fatLossStepsMax: integer("fat_loss_steps_max").notNull().default(12000),
+  fitnessStepsMin: integer("fitness_steps_min").notNull().default(8000),
+  fitnessStepsMax: integer("fitness_steps_max").notNull().default(10000),
+  weightAdjustPct: real("weight_adjust_pct").notNull().default(5),
+  bodyFatWarnMale: real("body_fat_warn_male").notNull().default(25),
+  bodyFatWarnFemale: real("body_fat_warn_female").notNull().default(30),
+  // AI prompts
+  aiDietPromptTemplate: text("ai_diet_prompt_template"),
+  aiMessagePromptTemplate: text("ai_message_prompt_template"),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export type WeeklyPlan = typeof weeklyPlans.$inferSelect;
+export type NewWeeklyPlan = typeof weeklyPlans.$inferInsert;
+export type DailyPlan = typeof dailyPlans.$inferSelect;
+export type NewDailyPlan = typeof dailyPlans.$inferInsert;
+export type CoachSettings = typeof coachSettings.$inferSelect;
