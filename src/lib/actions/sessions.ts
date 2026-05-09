@@ -11,7 +11,7 @@ import {
   sessionStartInputSchema,
   type SessionStartInput,
 } from "@/lib/validators/session";
-import { eq, desc, asc, inArray } from "drizzle-orm";
+import { eq, desc, asc, inArray, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -141,6 +141,43 @@ export async function removeExerciseFromSession(
     .where(eq(sessionExercises.id, sessionExerciseId))
     .run();
   revalidatePath(`/sessions/${sessionId}`);
+}
+
+/**
+ * 找學員 X 上一次做動作 Y 的最後一組（最新 session 的最大 setNumber）
+ * 用來推算 weight suggestion
+ */
+export async function getLastSetForExercise(
+  studentId: number,
+  exerciseId: number
+): Promise<{
+  weightKg: number | null;
+  rpe: number | null;
+  toFailure: boolean;
+} | null> {
+  const row = db
+    .select({
+      weightKg: setLogs.weightKg,
+      rpe: setLogs.rpe,
+      toFailure: setLogs.toFailure,
+    })
+    .from(setLogs)
+    .innerJoin(
+      sessionExercises,
+      eq(setLogs.sessionExerciseId, sessionExercises.id)
+    )
+    .innerJoin(sessions, eq(sessionExercises.sessionId, sessions.id))
+    .where(
+      and(
+        eq(sessions.studentId, studentId),
+        eq(sessionExercises.exerciseId, exerciseId)
+      )
+    )
+    .orderBy(desc(sessions.sessionNumber), desc(setLogs.setNumber))
+    .limit(1)
+    .get();
+
+  return row ?? null;
 }
 
 export async function completeSession(sessionId: number, coachNotes?: string) {
