@@ -11,6 +11,9 @@ export function Nav() {
           <Link href="/students" className="hover:underline">
             學員
           </Link>
+          <Link href="/exercises" className="hover:underline">
+            動作主檔
+          </Link>
         </div>
       </div>
     </nav>
