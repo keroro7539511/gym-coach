@@ -1,5 +1,4 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { Nav } from "@/components/nav";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,10 +20,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-TW" className={`${inter.variable} ${mono.variable}`}>
-      <body>
-        <Nav />
-        <main>{children}</main>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

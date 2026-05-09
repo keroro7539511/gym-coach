@@ -23,13 +23,14 @@ interface Props {
   defaultValues?: Partial<StudentInput>;
   onSubmit: (input: StudentInput) => Promise<void>;
   submitLabel?: string;
+  showPasswordField?: boolean;
 }
 
 const LABEL_CLS =
   "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block";
 const INPUT_CLS = "bg-[var(--surface-1)] border-border";
 
-export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }: Props) {
+export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存", showPasswordField = false }: Props) {
   const [pending, startTransition] = useTransition();
   const form = useForm<StudentInput>({
     resolver: zodResolver(studentInputSchema),
@@ -163,6 +164,33 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }:
           className="bg-[var(--surface-1)] border-border resize-none"
         />
       </div>
+
+      {showPasswordField && (
+        <div className="rounded-xl border border-border bg-[var(--surface-2)] p-4 space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            學員登入帳號（選填）
+          </p>
+          <p className="text-xs text-muted-foreground -mt-1">
+            填入後學員可直接用姓名＋此密碼登入，不填則稍後透過 QR code 配對
+          </p>
+          <div>
+            <Label htmlFor="initialPassword" className={LABEL_CLS}>初始密碼</Label>
+            <Input
+              id="initialPassword"
+              type="password"
+              {...form.register("initialPassword")}
+              className={INPUT_CLS}
+              placeholder="至少 4 個字元"
+              autoComplete="new-password"
+            />
+            {form.formState.errors.initialPassword && (
+              <p className="text-sm text-destructive mt-1">
+                {form.formState.errors.initialPassword.message}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <Button
         type="submit"

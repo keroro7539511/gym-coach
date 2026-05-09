@@ -42,11 +42,14 @@ export function SettingsForm({ defaults, onSubmit }: Props) {
       bodyFatWarnFemale: defaults.bodyFatWarnFemale,
       aiDietPromptTemplate: defaults.aiDietPromptTemplate ?? "",
       aiMessagePromptTemplate: defaults.aiMessagePromptTemplate ?? "",
+      geminiApiKey: defaults.geminiApiKey ?? "",
     },
   });
 
   const numReg = (name: keyof SettingsInput) =>
     form.register(name, { valueAsNumber: true });
+
+  const apiKey = form.watch("geminiApiKey");
 
   return (
     <form
@@ -55,6 +58,35 @@ export function SettingsForm({ defaults, onSubmit }: Props) {
       )}
       className="space-y-6 max-w-3xl"
     >
+      <section className={SECTION_CARD_CLS}>
+        <h3 className={SECTION_HEADING_CLS}>AI 設定</h3>
+        <div>
+          <Label htmlFor="geminiApiKey" className={LABEL_CLS}>
+            Gemini API Key
+          </Label>
+          <div className="relative">
+            <Input
+              id="geminiApiKey"
+              type="password"
+              autoComplete="off"
+              placeholder="AIzaSy…（至 Google AI Studio 取得）"
+              {...form.register("geminiApiKey")}
+              className={INPUT_CLS}
+            />
+            {apiKey && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-emerald-500 font-bold uppercase tracking-wider">
+                已設定
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            用於 AI 自動生成週計劃。前往{" "}
+            <span className="font-mono text-amber-500">aistudio.google.com/app/apikey</span>{" "}
+            建立免費 API Key，填入後點「儲存設定」即生效。
+          </p>
+        </div>
+      </section>
+
       <section className={SECTION_CARD_CLS}>
         <h3 className={SECTION_HEADING_CLS}>每日步數規則</h3>
         <div className="grid grid-cols-2 gap-4">

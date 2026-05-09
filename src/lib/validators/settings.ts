@@ -12,6 +12,7 @@ export const settingsInputSchema = z.object({
   bodyFatWarnFemale: z.number().min(0).max(100),
   aiDietPromptTemplate: z.string().min(0),
   aiMessagePromptTemplate: z.string().min(0),
+  geminiApiKey: z.string().min(0),
 });
 
 export type SettingsInput = z.infer<typeof settingsInputSchema>;

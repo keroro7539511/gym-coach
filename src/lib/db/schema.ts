@@ -206,7 +206,43 @@ export const coachSettings = sqliteTable("coach_settings", {
   // AI prompts
   aiDietPromptTemplate: text("ai_diet_prompt_template"),
   aiMessagePromptTemplate: text("ai_message_prompt_template"),
+  // AI 金鑰（儲存於 DB，不需寫在 .env）
+  geminiApiKey: text("gemini_api_key"),
+  // 教練帳號
+  passwordHash: text("password_hash"),
   updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+// ─── 認證相關 ─────────────────────────────────────────
+
+export const coachAccounts = sqliteTable("coach_accounts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  displayName: text("display_name"),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const studentAccounts = sqliteTable("student_accounts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  studentId: integer("student_id")
+    .notNull()
+    .unique()
+    .references(() => students.id),
+  passwordHash: text("password_hash").notNull(),
+  lastLoginAt: text("last_login_at"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const pairingTokens = sqliteTable("pairing_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  studentId: integer("student_id")
+    .notNull()
+    .references(() => students.id),
+  token: text("token").notNull().unique(),
+  expiresAt: text("expires_at").notNull(),
+  usedAt: text("used_at"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 export type WeeklyPlan = typeof weeklyPlans.$inferSelect;
@@ -214,3 +250,6 @@ export type NewWeeklyPlan = typeof weeklyPlans.$inferInsert;
 export type DailyPlan = typeof dailyPlans.$inferSelect;
 export type NewDailyPlan = typeof dailyPlans.$inferInsert;
 export type CoachSettings = typeof coachSettings.$inferSelect;
+export type CoachAccount = typeof coachAccounts.$inferSelect;
+export type StudentAccount = typeof studentAccounts.$inferSelect;
+export type PairingToken = typeof pairingTokens.$inferSelect;

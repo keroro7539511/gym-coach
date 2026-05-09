@@ -12,7 +12,7 @@ import {
   sessionStartInputSchema,
   type SessionStartInput,
 } from "@/lib/validators/session";
-import { eq, desc, asc, inArray, and, sql } from "drizzle-orm";
+import { eq, desc, asc, inArray, and, sql, isNotNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { recommendNextMuscleGroups } from "@/lib/recommendations/next-muscle-groups";
@@ -277,4 +277,76 @@ export async function completeSession(sessionId: number, coachNotes?: string) {
   revalidatePath(`/sessions/${sessionId}`);
   // 跳到 done 頁，那裡會生成 weekly plan 然後再跳到編輯頁
   redirect(`/sessions/${sessionId}/done`);
+}
+
+export type ExercisePR = {
+  exerciseId: number;
+  exerciseName: string;
+  muscleGroup: string;
+  bestWeightKg: number;
+  bestReps: number;
+  history: { sessionNumber: number; date: string; maxWeightKg: number }[];
+};
+
+export async function getExercisePRsForStudent(studentId: number): Promise<ExercisePR[]> {
+  const rows = db
+    .select({
+      exerciseId: exercises.id,
+      exerciseName: exercises.name,
+      muscleGroup: exercises.muscleGroup,
+      sessionNumber: sessions.sessionNumber,
+      sessionDate: sessions.startedAt,
+      weightKg: setLogs.weightKg,
+      reps: setLogs.reps,
+    })
+    .from(setLogs)
+    .innerJoin(sessionExercises, eq(setLogs.sessionExerciseId, sessionExercises.id))
+    .innerJoin(sessions, eq(sessionExercises.sessionId, sessions.id))
+    .innerJoin(exercises, eq(sessionExercises.exerciseId, exercises.id))
+    .where(
+      and(
+        eq(sessions.studentId, studentId),
+        eq(sessions.status, "completed"),
+        isNotNull(setLogs.weightKg)
+      )
+    )
+    .orderBy(asc(sessions.sessionNumber), asc(setLogs.setNumber))
+    .all();
+
+  const map = new Map<number, ExercisePR>();
+
+  for (const row of rows) {
+    if (row.weightKg == null || row.weightKg === 0) continue;
+
+    if (!map.has(row.exerciseId)) {
+      map.set(row.exerciseId, {
+        exerciseId: row.exerciseId,
+        exerciseName: row.exerciseName,
+        muscleGroup: row.muscleGroup,
+        bestWeightKg: 0,
+        bestReps: 0,
+        history: [],
+      });
+    }
+
+    const entry = map.get(row.exerciseId)!;
+
+    if (row.weightKg > entry.bestWeightKg) {
+      entry.bestWeightKg = row.weightKg;
+      entry.bestReps = row.reps ?? 0;
+    }
+
+    const date = row.sessionDate?.slice(0, 10) ?? "";
+    const hist = entry.history.find((h) => h.sessionNumber === row.sessionNumber);
+    if (hist) {
+      if (row.weightKg > hist.maxWeightKg) hist.maxWeightKg = row.weightKg;
+    } else {
+      entry.history.push({ sessionNumber: row.sessionNumber, date, maxWeightKg: row.weightKg });
+    }
+  }
+
+  const muscleOrder = ["chest", "back", "legs", "shoulder", "arm", "core", "small_muscles"];
+  return Array.from(map.values())
+    .filter((e) => e.bestWeightKg > 0)
+    .sort((a, b) => muscleOrder.indexOf(a.muscleGroup) - muscleOrder.indexOf(b.muscleGroup));
 }

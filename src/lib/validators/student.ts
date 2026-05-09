@@ -12,6 +12,8 @@ export const studentInputSchema = z
     weeklyClassCount: z.number().int().min(0).max(7),
     weeklyGymCount: z.number().int().min(0).max(7),
     notes: z.string().optional(),
+    // 建立時選填：同步建立學員登入帳號
+    initialPassword: z.string().min(4, "密碼至少 4 個字元").optional().or(z.literal("")),
   })
   .refine(
     (data) => data.goal !== "custom" || !!data.customGoal?.trim(),

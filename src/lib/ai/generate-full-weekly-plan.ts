@@ -9,6 +9,7 @@ export interface DaySpec {
 }
 
 export interface FullPlanInput {
+  geminiApiKey?: string | null;
   student: {
     gender: "M" | "F";
     age: number | null;
@@ -105,9 +106,9 @@ const SCHEMA: Schema = {
 export async function generateFullWeeklyPlan(
   input: FullPlanInput
 ): Promise<{ data: FullPlanOutput; source: "ai" | "fallback"; error?: string }> {
-  const model = getGeminiModel();
+  const model = getGeminiModel(input.geminiApiKey);
   if (!model) {
-    return { data: FALLBACK, source: "fallback", error: "GEMINI_API_KEY not set" };
+    return { data: FALLBACK, source: "fallback", error: "尚未設定 Gemini API Key，請至「設定」頁面填入" };
   }
 
   const prompt = buildPrompt(input);

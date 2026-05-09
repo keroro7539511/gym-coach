@@ -5,16 +5,20 @@ import {
   SchemaType,
 } from "@google/generative-ai";
 
+let cachedKey: string | null = null;
 let cachedModel: GenerativeModel | null = null;
 
-export function getGeminiModel(): GenerativeModel | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+export function getGeminiModel(apiKey?: string | null): GenerativeModel | null {
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  // 若 key 有換，清掉快取
+  if (key !== cachedKey) {
+    cachedKey = key;
+    cachedModel = null;
+  }
   if (cachedModel) return cachedModel;
-  const genAI = new GoogleGenerativeAI(apiKey);
-  cachedModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-  });
+  const genAI = new GoogleGenerativeAI(key);
+  cachedModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
   return cachedModel;
 }
 

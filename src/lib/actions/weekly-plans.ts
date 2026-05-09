@@ -104,6 +104,7 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
 
   // AI 呼叫
   const aiResult = await generateFullWeeklyPlan({
+    geminiApiKey: settings.geminiApiKey,
     student: {
       gender: student.gender,
       age: student.birthday
@@ -283,6 +284,121 @@ function summarizeInbodyDelta(
   ]
     .filter(Boolean)
     .join("、");
+}
+
+// ──────────────────────────────────────────────────
+export async function regenerateWeeklyPlanAI(
+  weeklyPlanId: number
+): Promise<{ ok: boolean; error?: string }> {
+  const wp = db
+    .select()
+    .from(weeklyPlans)
+    .where(eq(weeklyPlans.id, weeklyPlanId))
+    .get();
+  if (!wp) return { ok: false, error: "週計劃不存在" };
+
+  const student = db
+    .select()
+    .from(students)
+    .where(eq(students.id, wp.studentId))
+    .get();
+  if (!student) return { ok: false, error: "找不到學員" };
+
+  const settings = getCoachSettings();
+
+  // 取得現有 dailyPlans 的日期/星期資訊
+  const existingDays = db
+    .select()
+    .from(dailyPlans)
+    .where(eq(dailyPlans.weeklyPlanId, weeklyPlanId))
+    .orderBy(asc(dailyPlans.date))
+    .all();
+
+  const daySpecs: DaySpec[] = existingDays.map((d) => ({
+    date: d.date,
+    dayOfWeek: d.dayOfWeek,
+    isClassDay: d.isClassDay,
+  }));
+
+  const recentInbody = db
+    .select()
+    .from(inbodyRecords)
+    .where(eq(inbodyRecords.studentId, student.id))
+    .orderBy(desc(inbodyRecords.measuredAt))
+    .limit(2)
+    .all();
+  const latestInbody = recentInbody[0];
+  const prevInbody = recentInbody[1];
+
+  const aiResult = await generateFullWeeklyPlan({
+    geminiApiKey: settings.geminiApiKey,
+    student: {
+      gender: student.gender,
+      age: student.birthday
+        ? new Date().getFullYear() - new Date(student.birthday).getFullYear()
+        : null,
+      goal: GOAL_LABEL[student.goal] ?? student.goal,
+      weeklyClassCount: student.weeklyClassCount,
+    },
+    inbody: latestInbody
+      ? {
+          weightKg: latestInbody.weightKg ?? null,
+          bodyFatPct: latestInbody.bodyFatPct ?? null,
+          skeletalMuscleKg: latestInbody.skeletalMuscleKg ?? null,
+          bmrKcal: latestInbody.bmrKcal ?? null,
+          bmi: latestInbody.bmi ?? null,
+          visceralFatLevel: latestInbody.visceralFatLevel ?? null,
+        }
+      : null,
+    sessionSummary: await summarizeSession(wp.sourceSessionId),
+    inbodyDelta: summarizeInbodyDelta(latestInbody, prevInbody),
+    startDate: wp.startDate,
+    daySpecs,
+    promptTemplate: settings.aiDietPromptTemplate ?? "",
+  });
+
+  if (aiResult.source === "fallback") {
+    return { ok: false, error: aiResult.error ?? "AI 生成失敗" };
+  }
+
+  // 更新整週訊息
+  db.update(weeklyPlans)
+    .set({
+      coachOverallMessage: aiResult.data.overallMessage || null,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(weeklyPlans.id, weeklyPlanId))
+    .run();
+
+  // 更新每日計劃（飲食、水分、有氧、訓練建議）
+  for (const aiDay of aiResult.data.days) {
+    const dp = existingDays.find((d) => d.date === aiDay.date);
+    if (!dp) continue;
+    db.update(dailyPlans)
+      .set({
+        walkingStepsTarget: aiDay.walkingStepsTarget,
+        cardioMinutesTarget: aiDay.cardioMinutesTarget,
+        mealBreakfast: aiDay.mealBreakfast || null,
+        mealLunch: aiDay.mealLunch || null,
+        mealDinner: aiDay.mealDinner || null,
+        mealSnacks: aiDay.mealSnacks || null,
+        waterTargetMl: aiDay.waterTargetMl,
+        sleepTargetHoursMin: aiDay.sleepTargetHoursMin,
+        sleepTargetHoursMax: aiDay.sleepTargetHoursMax,
+        extraExercises: aiDay.extraExercises.map((ex) => ({
+          exerciseId: null,
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+        })),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(dailyPlans.id, dp.id))
+      .run();
+  }
+
+  revalidatePath(`/weekly-plans/${weeklyPlanId}`);
+  return { ok: true };
 }
 
 // ──────────────────────────────────────────────────
