@@ -13,31 +13,54 @@ export default async function StudentOverviewPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const student = await getStudent(Number(id));
+  const { id: idStr } = await params;
+  const student = await getStudent(Number(idStr));
   if (!student) notFound();
 
-  return (
-    <div className="space-y-3">
-      <Field label="性別">{student.gender === "M" ? "男" : "女"}</Field>
-      <Field label="生日">{student.birthday ?? "—"}</Field>
-      <Field label="電話">{student.phone ?? "—"}</Field>
-      <Field label="Email">{student.email ?? "—"}</Field>
-      <Field label="目標">
-        {student.goal === "custom" ? student.customGoal : goalLabel[student.goal]}
-      </Field>
-      <Field label="每週上課">{student.weeklyClassCount} 次</Field>
-      <Field label="每週可進健身房">{student.weeklyGymCount} 次</Field>
-      <Field label="備註">{student.notes ?? "—"}</Field>
-    </div>
-  );
-}
+  const fields: { label: string; value: string | number | null | undefined; mono?: boolean; accent?: boolean }[] = [
+    { label: "性別", value: student.gender === "M" ? "男" : "女" },
+    { label: "生日", value: student.birthday ?? "—", mono: true },
+    { label: "電話", value: student.phone ?? "—", mono: true },
+    { label: "EMAIL", value: student.email ?? "—", mono: true },
+    {
+      label: "目標",
+      value: student.goal === "custom" ? student.customGoal : goalLabel[student.goal],
+      accent: true,
+    },
+    { label: "每週上課", value: `${student.weeklyClassCount} 次`, mono: true },
+    { label: "每週可進健身房", value: `${student.weeklyGymCount} 次`, mono: true },
+  ];
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[120px_1fr] text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{children}</span>
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border bg-[var(--surface-2)] p-6">
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">
+          基本資料
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+          {fields.map((f) => (
+            <div key={f.label} className="flex justify-between items-center border-b border-[var(--border-subtle)] pb-3 last:border-0">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {f.label}
+              </span>
+              <span
+                className={`text-sm font-semibold ${f.mono ? "font-mono" : ""} ${f.accent ? "text-amber-500" : ""}`}
+              >
+                {f.value ?? "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {student.notes && (
+        <div className="rounded-xl border border-border bg-[var(--surface-2)] p-6">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">
+            備註
+          </h2>
+          <p className="text-sm whitespace-pre-wrap">{student.notes}</p>
+        </div>
+      )}
     </div>
   );
 }
