@@ -15,14 +15,16 @@ export default async function InBodyListPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const studentId = Number(id);
+  const { id: idStr } = await params;
+  const studentId = Number(idStr);
   const records = await listInBodyRecords(studentId);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">InBody 紀錄</h2>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          InBody 紀錄
+        </h2>
         <Link
           href={`/students/${studentId}/inbody/new`}
           className={buttonVariants()}
@@ -32,39 +34,50 @@ export default async function InBodyListPage({
       </div>
 
       {records.length === 0 ? (
-        <p className="text-muted-foreground">尚無紀錄。</p>
+        <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+          尚無紀錄
+        </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>日期</TableHead>
-              <TableHead>體重</TableHead>
-              <TableHead>體脂率</TableHead>
-              <TableHead>骨骼肌</TableHead>
-              <TableHead>BMR</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {records.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>{r.measuredAt}</TableCell>
-                <TableCell>{r.weightKg ?? "—"}</TableCell>
-                <TableCell>{r.bodyFatPct ?? "—"}</TableCell>
-                <TableCell>{r.skeletalMuscleKg ?? "—"}</TableCell>
-                <TableCell>{r.bmrKcal ?? "—"}</TableCell>
-                <TableCell>
-                  <Link
-                    href={`/students/${studentId}/inbody/${r.id}`}
-                    className={buttonVariants({ variant: "ghost", size: "sm" })}
-                  >
-                    查看
-                  </Link>
-                </TableCell>
+        <div className="rounded-xl border border-border bg-[var(--surface-2)] overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-[var(--border-subtle)]">
+                {["日期", "體重 KG", "體脂 %", "骨骼肌 KG", "BMR", ""].map(
+                  (h) => (
+                    <TableHead
+                      key={h}
+                      className="text-[10px] font-bold uppercase tracking-[0.15em]"
+                    >
+                      {h}
+                    </TableHead>
+                  )
+                )}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {records.map((r) => (
+                <TableRow
+                  key={r.id}
+                  className="border-[var(--border-subtle)] last:border-0 font-mono"
+                >
+                  <TableCell>{r.measuredAt}</TableCell>
+                  <TableCell>{r.weightKg ?? "—"}</TableCell>
+                  <TableCell>{r.bodyFatPct ?? "—"}</TableCell>
+                  <TableCell>{r.skeletalMuscleKg ?? "—"}</TableCell>
+                  <TableCell>{r.bmrKcal ?? "—"}</TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/students/${studentId}/inbody/${r.id}`}
+                      className="text-xs uppercase tracking-wider font-semibold text-amber-500 hover:underline"
+                    >
+                      查看 →
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

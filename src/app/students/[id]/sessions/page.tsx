@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { StatusBadge } from "@/components/ui/badge-status";
 import { MUSCLE_GROUP_LABEL } from "@/components/exercise-form";
 
 export default async function SessionsListPage({
@@ -26,9 +27,11 @@ export default async function SessionsListPage({
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">訓練紀錄</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          訓練紀錄
+        </h2>
         <form action={startNew}>
           <button type="submit" className={buttonVariants()}>
             + 開始新一堂課
@@ -37,47 +40,65 @@ export default async function SessionsListPage({
       </div>
 
       {sessions.length === 0 ? (
-        <p className="text-muted-foreground">尚無紀錄。</p>
+        <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+          尚無紀錄
+        </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>第幾堂</TableHead>
-              <TableHead>開始時間</TableHead>
-              <TableHead>目標肌群</TableHead>
-              <TableHead>狀態</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sessions.map((s) => (
-              <TableRow key={s.id}>
-                <TableCell>第 {s.sessionNumber} 堂</TableCell>
-                <TableCell>{s.startedAt ?? s.scheduledAt ?? "—"}</TableCell>
-                <TableCell>
-                  {s.targetMuscleGroups
-                    .map((m) => MUSCLE_GROUP_LABEL[m] ?? m)
-                    .join("、")}
-                </TableCell>
-                <TableCell>
-                  {s.status === "in_progress"
-                    ? "進行中"
-                    : s.status === "completed"
-                    ? "已完成"
-                    : "預定"}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/sessions/${s.id}`}
-                    className={buttonVariants({ variant: "ghost", size: "sm" })}
+        <div className="rounded-xl border border-border bg-[var(--surface-2)] overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-[var(--border-subtle)]">
+                {["第幾堂", "開始時間", "目標肌群", "狀態", ""].map((h) => (
+                  <TableHead
+                    key={h}
+                    className="text-[10px] font-bold uppercase tracking-[0.15em]"
                   >
-                    {s.status === "completed" ? "查看" : "繼續"}
-                  </Link>
-                </TableCell>
+                    {h}
+                  </TableHead>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sessions.map((s) => (
+                <TableRow
+                  key={s.id}
+                  className="border-[var(--border-subtle)] last:border-0"
+                >
+                  <TableCell>
+                    <span className="font-mono text-amber-500 font-bold">
+                      #{s.sessionNumber}
+                    </span>
+                  </TableCell>
+                  <TableCell className="font-mono text-muted-foreground text-sm">
+                    {s.startedAt ?? s.scheduledAt ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {s.targetMuscleGroups
+                      .map((m) => MUSCLE_GROUP_LABEL[m] ?? m)
+                      .join("、")}
+                  </TableCell>
+                  <TableCell>
+                    {s.status === "in_progress" ? (
+                      <StatusBadge variant="live">進行中</StatusBadge>
+                    ) : s.status === "completed" ? (
+                      <StatusBadge variant="completed">已完成</StatusBadge>
+                    ) : (
+                      <StatusBadge variant="scheduled">預定</StatusBadge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/sessions/${s.id}`}
+                      className="text-xs uppercase tracking-wider font-semibold text-amber-500 hover:underline"
+                    >
+                      {s.status === "completed" ? "查看 →" : "繼續 →"}
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
