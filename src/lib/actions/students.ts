@@ -3,7 +3,7 @@
 import { db } from "@/lib/db/client";
 import { students } from "@/lib/db/schema";
 import { studentInputSchema, type StudentInput } from "@/lib/validators/student";
-import { eq, isNull, desc } from "drizzle-orm";
+import { eq, isNull, isNotNull, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -62,4 +62,26 @@ export async function softDeleteStudent(id: number) {
 
   revalidatePath("/students");
   redirect("/students");
+}
+
+export async function listDeletedStudents() {
+  return db
+    .select()
+    .from(students)
+    .where(isNotNull(students.deletedAt))
+    .orderBy(asc(students.deletedAt))
+    .all();
+}
+
+export async function restoreStudent(id: number) {
+  db.update(students)
+    .set({
+      deletedAt: null,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(students.id, id))
+    .run();
+
+  revalidatePath("/students");
+  revalidatePath("/students/deleted");
 }

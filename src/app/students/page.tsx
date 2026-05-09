@@ -24,9 +24,17 @@ export default async function StudentsPage() {
     <div className="container mx-auto p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">學員列表</h1>
-        <Link href="/students/new" className={buttonVariants()}>
-          + 新增學員
-        </Link>
+        <div className="flex gap-2 items-center">
+          <Link
+            href="/students/deleted"
+            className="text-xs text-muted-foreground hover:underline"
+          >
+            已刪除
+          </Link>
+          <Link href="/students/new" className={buttonVariants()}>
+            + 新增學員
+          </Link>
+        </div>
       </div>
 
       {students.length === 0 ? (

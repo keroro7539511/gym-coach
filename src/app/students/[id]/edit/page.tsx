@@ -1,4 +1,4 @@
-import { getStudent, updateStudent } from "@/lib/actions/students";
+import { getStudent, updateStudent, softDeleteStudent } from "@/lib/actions/students";
 import { notFound, redirect } from "next/navigation";
 import { StudentForm } from "@/components/student-form";
 import type { StudentInput } from "@/lib/validators/student";
@@ -17,6 +17,11 @@ export default async function EditStudentPage({
     "use server";
     await updateStudent(id, input);
     redirect(`/students/${id}`);
+  }
+
+  async function deleteAction() {
+    "use server";
+    await softDeleteStudent(id);
   }
 
   return (
@@ -38,6 +43,15 @@ export default async function EditStudentPage({
         onSubmit={handle}
         submitLabel="儲存修改"
       />
+
+      <form action={deleteAction} className="mt-12 pt-6 border-t">
+        <button
+          type="submit"
+          className="text-sm text-destructive hover:underline"
+        >
+          刪除這位學員（30 天內可救回）
+        </button>
+      </form>
     </div>
   );
 }
