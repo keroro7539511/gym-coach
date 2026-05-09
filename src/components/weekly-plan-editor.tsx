@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { buttonVariants } from "@/components/ui/button";
 import { DailyPlanEditor } from "@/components/daily-plan-editor";
 import { updateWeeklyPlanMessage } from "@/lib/actions/weekly-plans";
 import type { WeeklyPlan, DailyPlan } from "@/lib/db/schema";
@@ -47,6 +48,24 @@ export function WeeklyPlanEditor({ plan, days, studentName }: Props) {
         </p>
       </header>
 
+      <div className="flex gap-3 mb-6">
+        <a
+          href={`/api/weekly-plans/${plan.id}/pdf`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          預覽 PDF
+        </a>
+        <a
+          href={`/api/weekly-plans/${plan.id}/pdf`}
+          download
+          className={buttonVariants()}
+        >
+          下載 PDF
+        </a>
+      </div>
+
       <section className="mb-8">
         <Label htmlFor="overall">教練給整週的話 (AI 草稿，可編輯)</Label>
         <Textarea
@@ -84,7 +103,7 @@ export function WeeklyPlanEditor({ plan, days, studentName }: Props) {
       </Tabs>
 
       <div className="mt-8 pt-6 border-t text-sm text-muted-foreground">
-        所有變更會自動儲存。下個版本會加 PDF 下載按鈕。
+        所有變更會自動儲存。
       </div>
     </div>
   );
