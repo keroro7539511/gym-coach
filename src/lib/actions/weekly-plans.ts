@@ -15,8 +15,10 @@ import { eq, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { recommendDailyActivity } from "@/lib/recommendations/daily-activity";
-import { generateDietPlan } from "@/lib/ai/generate-diet";
-import { generateCoachMessage } from "@/lib/ai/generate-coach-message";
+import {
+  generateFullWeeklyPlan,
+  type DaySpec,
+} from "@/lib/ai/generate-full-weekly-plan";
 import { getCoachSettings } from "@/lib/coach-settings";
 
 // ──────────────────────────────────────────────────
@@ -75,7 +77,9 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
   const settings = getCoachSettings();
 
   // 7 天起訖
-  const sessionDate = (session.endedAt ?? session.startedAt ?? new Date().toISOString()).slice(0, 10);
+  const sessionDate = (
+    session.endedAt ?? session.startedAt ?? new Date().toISOString()
+  ).slice(0, 10);
   const days = nextSevenDays(sessionDate);
   const startDate = days[0].date;
   const endDate = days[6].date;
@@ -91,33 +95,40 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
   const latestInbody = recentInbody[0];
   const prevInbody = recentInbody[1];
 
-  // 並行：AI 飲食 + AI 教練建議文
-  const [dietResult, messageResult] = await Promise.all([
-    generateDietPlan(
-      {
-        gender: student.gender,
-        age: student.birthday
-          ? new Date().getFullYear() - new Date(student.birthday).getFullYear()
-          : null,
-        goal: GOAL_LABEL[student.goal] ?? student.goal,
-        weightKg: latestInbody?.weightKg ?? null,
-        bodyFatPct: latestInbody?.bodyFatPct ?? null,
-        bmrKcal: latestInbody?.bmrKcal ?? null,
-        classDays: [DAY_NAMES[new Date(sessionDate).getDay()]],
-        gymDays: [],
-      },
-      startDate,
-      settings.aiDietPromptTemplate ?? ""
-    ),
-    generateCoachMessage(
-      {
-        sessionSummary: await summarizeSession(sessionId),
-        inbodyDelta: summarizeInbodyDelta(latestInbody, prevInbody),
-        goal: GOAL_LABEL[student.goal] ?? student.goal,
-      },
-      settings.aiMessagePromptTemplate ?? ""
-    ),
-  ]);
+  // 組成 dailyPlans 結構（含上課日標記）
+  const daySpecs: DaySpec[] = days.map((d) => ({
+    date: d.date,
+    dayOfWeek: d.dayOfWeek,
+    isClassDay: simulateClassDay(d.dayOfWeek, student.weeklyClassCount),
+  }));
+
+  // AI 呼叫
+  const aiResult = await generateFullWeeklyPlan({
+    student: {
+      gender: student.gender,
+      age: student.birthday
+        ? new Date().getFullYear() -
+          new Date(student.birthday).getFullYear()
+        : null,
+      goal: GOAL_LABEL[student.goal] ?? student.goal,
+      weeklyClassCount: student.weeklyClassCount,
+    },
+    inbody: latestInbody
+      ? {
+          weightKg: latestInbody.weightKg ?? null,
+          bodyFatPct: latestInbody.bodyFatPct ?? null,
+          skeletalMuscleKg: latestInbody.skeletalMuscleKg ?? null,
+          bmrKcal: latestInbody.bmrKcal ?? null,
+          bmi: latestInbody.bmi ?? null,
+          visceralFatLevel: latestInbody.visceralFatLevel ?? null,
+        }
+      : null,
+    sessionSummary: await summarizeSession(sessionId),
+    inbodyDelta: summarizeInbodyDelta(latestInbody, prevInbody),
+    startDate,
+    daySpecs,
+    promptTemplate: settings.aiDietPromptTemplate ?? "",
+  });
 
   // 寫入 weeklyPlan
   const wp = db
@@ -127,49 +138,74 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
       sourceSessionId: sessionId,
       startDate,
       endDate,
-      coachOverallMessage: messageResult.text || null,
+      coachOverallMessage: aiResult.data.overallMessage || null,
       status: "draft",
     })
     .returning({ id: weeklyPlans.id })
     .all();
   const weeklyPlanId = wp[0].id;
 
-  // 寫入 7 筆 dailyPlan
-  // 依「該週的某一天是否為上課日」估算（只把 sessionDate 隔天的某一天當作下次上課，
-  //  用學員 weeklyClassCount 模擬）
-  for (const d of days) {
-    const isClassDay = simulateClassDay(d.dayOfWeek, student.weeklyClassCount);
-    const activity = recommendDailyActivity({
-      goal: student.goal,
-      isClassDay,
-      bmi: latestInbody?.bmi ?? null,
-      muscleGainSteps: [
-        settings.muscleGainStepsMin,
-        settings.muscleGainStepsMax,
-      ],
-      fatLossSteps: [settings.fatLossStepsMin, settings.fatLossStepsMax],
-      fitnessSteps: [settings.fitnessStepsMin, settings.fitnessStepsMax],
-    });
-    const meal = dietResult.data.find((m) => m.date === d.date);
-    db.insert(dailyPlans)
-      .values({
-        weeklyPlanId,
-        date: d.date,
-        dayOfWeek: d.dayOfWeek,
-        isClassDay,
-        walkingStepsTarget: activity.stepsTarget,
-        cardioMinutesTarget: activity.cardioMinutesTarget,
-        mealBreakfast: meal?.breakfast ?? null,
-        mealLunch: meal?.lunch ?? null,
-        mealDinner: meal?.dinner ?? null,
-        mealSnacks: meal?.snacks ?? null,
-        waterTargetMl: 2500,
-        sleepTargetHoursMin: 7,
-        sleepTargetHoursMax: 8,
-        extraExercises: [],
-        coachMessage: null,
-      })
-      .run();
+  // 寫入 7 筆 dailyPlan：AI 有資料用 AI、否則 fallback 規則
+  for (const d of daySpecs) {
+    const aiDay = aiResult.data.days.find((x) => x.date === d.date);
+    if (aiDay) {
+      db.insert(dailyPlans)
+        .values({
+          weeklyPlanId,
+          date: d.date,
+          dayOfWeek: d.dayOfWeek,
+          isClassDay: d.isClassDay,
+          walkingStepsTarget: aiDay.walkingStepsTarget,
+          cardioMinutesTarget: aiDay.cardioMinutesTarget,
+          mealBreakfast: aiDay.mealBreakfast || null,
+          mealLunch: aiDay.mealLunch || null,
+          mealDinner: aiDay.mealDinner || null,
+          mealSnacks: aiDay.mealSnacks || null,
+          waterTargetMl: aiDay.waterTargetMl,
+          sleepTargetHoursMin: aiDay.sleepTargetHoursMin,
+          sleepTargetHoursMax: aiDay.sleepTargetHoursMax,
+          extraExercises: aiDay.extraExercises.map((ex) => ({
+            exerciseId: null,
+            name: ex.name,
+            sets: ex.sets,
+            reps: ex.reps,
+          })),
+          coachMessage: null,
+        })
+        .run();
+    } else {
+      // fallback 規則
+      const activity = recommendDailyActivity({
+        goal: student.goal,
+        isClassDay: d.isClassDay,
+        bmi: latestInbody?.bmi ?? null,
+        muscleGainSteps: [
+          settings.muscleGainStepsMin,
+          settings.muscleGainStepsMax,
+        ],
+        fatLossSteps: [settings.fatLossStepsMin, settings.fatLossStepsMax],
+        fitnessSteps: [settings.fitnessStepsMin, settings.fitnessStepsMax],
+      });
+      db.insert(dailyPlans)
+        .values({
+          weeklyPlanId,
+          date: d.date,
+          dayOfWeek: d.dayOfWeek,
+          isClassDay: d.isClassDay,
+          walkingStepsTarget: activity.stepsTarget,
+          cardioMinutesTarget: activity.cardioMinutesTarget,
+          mealBreakfast: null,
+          mealLunch: null,
+          mealDinner: null,
+          mealSnacks: null,
+          waterTargetMl: 2500,
+          sleepTargetHoursMin: 7,
+          sleepTargetHoursMax: 8,
+          extraExercises: [],
+          coachMessage: null,
+        })
+        .run();
+    }
   }
 
   // 註：故意不在這裡呼叫 revalidatePath，因為這個 function 通常從
