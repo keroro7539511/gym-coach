@@ -8,8 +8,8 @@ export default async function EditStudentPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id: idParam } = await params;
-  const id = Number(idParam);
+  const { id: idStr } = await params;
+  const id = Number(idStr);
   const student = await getStudent(id);
   if (!student) notFound();
 
@@ -19,14 +19,16 @@ export default async function EditStudentPage({
     redirect(`/students/${id}`);
   }
 
-  async function deleteAction() {
+  const deleteAction = async () => {
     "use server";
     await softDeleteStudent(id);
-  }
+  };
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">編輯學員資料</h2>
+    <div className="space-y-8">
+      <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+        編輯學員資料
+      </h2>
       <StudentForm
         defaultValues={{
           name: student.name,
@@ -44,10 +46,10 @@ export default async function EditStudentPage({
         submitLabel="儲存修改"
       />
 
-      <form action={deleteAction} className="mt-12 pt-6 border-t">
+      <form action={deleteAction} className="pt-8 border-t border-[var(--border-subtle)]">
         <button
           type="submit"
-          className="text-sm text-destructive hover:underline"
+          className="text-xs uppercase tracking-wider font-semibold text-rose-500 hover:underline"
         >
           刪除這位學員（30 天內可救回）
         </button>

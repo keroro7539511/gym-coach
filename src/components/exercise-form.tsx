@@ -35,6 +35,10 @@ export const MUSCLE_GROUP_LABEL: Record<string, string> = {
   small_muscles: "小肌群",
 };
 
+const LABEL_CLS =
+  "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block";
+const INPUT_CLS = "bg-[var(--surface-1)] border-border";
+
 export function ExerciseForm({
   defaultValues,
   onSubmit,
@@ -55,11 +59,11 @@ export function ExerciseForm({
       onSubmit={form.handleSubmit((data) =>
         startTransition(() => onSubmit(data))
       )}
-      className="space-y-4 max-w-xl"
+      className="space-y-5 max-w-xl"
     >
       <div>
-        <Label htmlFor="name">動作名稱（中文） *</Label>
-        <Input id="name" {...form.register("name")} />
+        <Label htmlFor="name" className={LABEL_CLS}>動作名稱（中文） *</Label>
+        <Input id="name" {...form.register("name")} className={INPUT_CLS} />
         {form.formState.errors.name && (
           <p className="text-sm text-destructive mt-1">
             {form.formState.errors.name.message}
@@ -68,19 +72,19 @@ export function ExerciseForm({
       </div>
 
       <div>
-        <Label htmlFor="nameEn">英文名稱</Label>
-        <Input id="nameEn" {...form.register("nameEn")} />
+        <Label htmlFor="nameEn" className={LABEL_CLS}>英文名稱</Label>
+        <Input id="nameEn" {...form.register("nameEn")} className={INPUT_CLS} />
       </div>
 
       <div>
-        <Label>肌群 *</Label>
+        <Label className={LABEL_CLS}>肌群 *</Label>
         <Select
           value={form.watch("muscleGroup")}
           onValueChange={(v) =>
             form.setValue("muscleGroup", v as ExerciseInput["muscleGroup"])
           }
         >
-          <SelectTrigger>
+          <SelectTrigger className={INPUT_CLS}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -94,21 +98,30 @@ export function ExerciseForm({
       </div>
 
       <div>
-        <Label htmlFor="equipment">器材</Label>
-        <Input id="equipment" {...form.register("equipment")} />
+        <Label htmlFor="equipment" className={LABEL_CLS}>器材</Label>
+        <Input id="equipment" {...form.register("equipment")} className={INPUT_CLS} />
       </div>
 
       <div>
-        <Label htmlFor="demoImageUrl">示範圖網址</Label>
-        <Input id="demoImageUrl" {...form.register("demoImageUrl")} />
+        <Label htmlFor="demoImageUrl" className={LABEL_CLS}>示範圖網址</Label>
+        <Input id="demoImageUrl" {...form.register("demoImageUrl")} className={INPUT_CLS} />
       </div>
 
       <div>
-        <Label htmlFor="description">說明</Label>
-        <Textarea id="description" rows={4} {...form.register("description")} />
+        <Label htmlFor="description" className={LABEL_CLS}>說明</Label>
+        <Textarea
+          id="description"
+          rows={4}
+          {...form.register("description")}
+          className="bg-[var(--surface-1)] border-border resize-none"
+        />
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button
+        type="submit"
+        disabled={pending}
+        className="uppercase tracking-wider font-bold"
+      >
         {pending ? "儲存中…" : submitLabel}
       </Button>
     </form>

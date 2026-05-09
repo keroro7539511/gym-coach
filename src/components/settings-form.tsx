@@ -11,13 +11,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import type { CoachSettings } from "@/lib/db/schema";
 
 interface Props {
   defaults: CoachSettings;
   onSubmit: (input: SettingsInput) => Promise<void>;
 }
+
+const LABEL_CLS =
+  "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block";
+const INPUT_CLS = "bg-[var(--surface-1)] border-border font-mono";
+const SECTION_CARD_CLS =
+  "rounded-xl border border-border bg-[var(--surface-2)] p-6";
+const SECTION_HEADING_CLS =
+  "text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4";
 
 export function SettingsForm({ defaults, onSubmit }: Props) {
   const [pending, startTransition] = useTransition();
@@ -46,10 +53,10 @@ export function SettingsForm({ defaults, onSubmit }: Props) {
       onSubmit={form.handleSubmit((data) =>
         startTransition(() => onSubmit(data))
       )}
-      className="space-y-8 max-w-3xl"
+      className="space-y-6 max-w-3xl"
     >
-      <section>
-        <h3 className="font-semibold mb-3">每日步數規則</h3>
+      <section className={SECTION_CARD_CLS}>
+        <h3 className={SECTION_HEADING_CLS}>每日步數規則</h3>
         <div className="grid grid-cols-2 gap-4">
           <NumField
             label="增肌・最低"
@@ -84,25 +91,21 @@ export function SettingsForm({ defaults, onSubmit }: Props) {
         </div>
       </section>
 
-      <Separator />
-
-      <section>
-        <h3 className="font-semibold mb-3">重量建議</h3>
+      <section className={SECTION_CARD_CLS}>
+        <h3 className={SECTION_HEADING_CLS}>重量建議</h3>
         <NumField
           label="重量微調百分比 (%)"
           id="wapct"
           register={numReg("weightAdjustPct")}
           step="0.5"
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-2">
           RPE ≤ 7 加重、≥ 10 減重的調整幅度。預設 5%。
         </p>
       </section>
 
-      <Separator />
-
-      <section>
-        <h3 className="font-semibold mb-3">體脂警示閾值</h3>
+      <section className={SECTION_CARD_CLS}>
+        <h3 className={SECTION_HEADING_CLS}>體脂警示閾值</h3>
         <div className="grid grid-cols-2 gap-4">
           <NumField
             label="男性體脂率上限 (%)"
@@ -117,39 +120,41 @@ export function SettingsForm({ defaults, onSubmit }: Props) {
             step="0.5"
           />
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-2">
           超過閾值且目標為增肌時，系統會建議「先減脂」。
         </p>
       </section>
 
-      <Separator />
-
-      <section>
-        <h3 className="font-semibold mb-3">AI 飲食 Prompt 模板</h3>
+      <section className={SECTION_CARD_CLS}>
+        <h3 className={SECTION_HEADING_CLS}>AI 飲食 Prompt 模板</h3>
         <Textarea
           rows={10}
           {...form.register("aiDietPromptTemplate")}
-          className="font-mono text-xs"
+          className="bg-[var(--surface-1)] border-border font-mono text-xs resize-none"
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-2">
           可用變數：{"{{gender}}"}、{"{{age}}"}、{"{{goal}}"}、{"{{weight}}"}、
           {"{{bodyFatPct}}"}、{"{{bmr}}"}、{"{{classDays}}"}、{"{{gymDays}}"}
         </p>
       </section>
 
-      <section>
-        <h3 className="font-semibold mb-3">AI 教練建議文 Prompt 模板</h3>
+      <section className={SECTION_CARD_CLS}>
+        <h3 className={SECTION_HEADING_CLS}>AI 教練建議文 Prompt 模板</h3>
         <Textarea
           rows={8}
           {...form.register("aiMessagePromptTemplate")}
-          className="font-mono text-xs"
+          className="bg-[var(--surface-1)] border-border font-mono text-xs resize-none"
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-2">
           可用變數：{"{{sessionSummary}}"}、{"{{inbodyDelta}}"}、{"{{goal}}"}
         </p>
       </section>
 
-      <Button type="submit" disabled={pending}>
+      <Button
+        type="submit"
+        disabled={pending}
+        className="uppercase tracking-wider font-bold"
+      >
         {pending ? "儲存中…" : "儲存設定"}
       </Button>
     </form>
@@ -169,8 +174,8 @@ function NumField({
 }) {
   return (
     <div>
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type="number" step={step} {...register} />
+      <Label htmlFor={id} className={LABEL_CLS}>{label}</Label>
+      <Input id={id} type="number" step={step} {...register} className={INPUT_CLS} />
     </div>
   );
 }

@@ -15,54 +15,73 @@ export default async function ExercisesPage() {
   const list = await listExercises();
 
   return (
-    <div className="container mx-auto p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">動作主檔</h1>
+    <div className="container mx-auto px-6 py-10 max-w-6xl">
+      <header className="flex items-end justify-between mb-8">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            LIBRARY
+          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight mt-1">
+            動作主檔
+          </h1>
+        </div>
         <Link href="/exercises/new" className={buttonVariants()}>
           + 新增自訂動作
         </Link>
-      </div>
+      </header>
 
       {list.length === 0 ? (
-        <p className="text-muted-foreground">
-          尚無動作，請執行 `npm run db:seed` 載入預設清單。
-        </p>
+        <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+          尚無動作，請執行 <code className="font-mono text-amber-500">npm run db:seed</code>
+        </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>名稱</TableHead>
-              <TableHead>肌群</TableHead>
-              <TableHead>器材</TableHead>
-              <TableHead>來源</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.map((e) => (
-              <TableRow key={e.id}>
-                <TableCell className="font-medium">{e.name}</TableCell>
-                <TableCell>
-                  {MUSCLE_GROUP_LABEL[e.muscleGroup] ?? e.muscleGroup}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {e.equipment ?? "—"}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {e.isCustom ? "自訂" : e.wgerId ? "wger" : "內建"}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/exercises/${e.id}/edit`}
-                    className={buttonVariants({ variant: "ghost", size: "sm" })}
+        <div className="rounded-xl border border-border bg-[var(--surface-2)] overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-[var(--border-subtle)]">
+                {["名稱", "肌群", "器材", "來源", ""].map((h) => (
+                  <TableHead
+                    key={h}
+                    className="text-[10px] font-bold uppercase tracking-[0.15em]"
                   >
-                    編輯
-                  </Link>
-                </TableCell>
+                    {h}
+                  </TableHead>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {list.map((e) => (
+                <TableRow
+                  key={e.id}
+                  className="border-[var(--border-subtle)] last:border-0"
+                >
+                  <TableCell className="font-semibold">{e.name}</TableCell>
+                  <TableCell>
+                    <span className="text-amber-500 text-sm font-semibold">
+                      {MUSCLE_GROUP_LABEL[e.muscleGroup] ?? e.muscleGroup}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {e.equipment ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                      {e.isCustom ? "自訂" : e.wgerId ? "wger" : "內建"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/exercises/${e.id}/edit`}
+                      className="text-xs uppercase tracking-wider font-semibold text-amber-500 hover:underline"
+                    >
+                      編輯 →
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

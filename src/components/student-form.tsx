@@ -25,6 +25,10 @@ interface Props {
   submitLabel?: string;
 }
 
+const LABEL_CLS =
+  "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block";
+const INPUT_CLS = "bg-[var(--surface-1)] border-border";
+
 export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }: Props) {
   const [pending, startTransition] = useTransition();
   const form = useForm<StudentInput>({
@@ -46,11 +50,11 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }:
       onSubmit={form.handleSubmit((data) =>
         startTransition(() => onSubmit(data))
       )}
-      className="space-y-4 max-w-xl"
+      className="space-y-5 max-w-xl"
     >
       <div>
-        <Label htmlFor="name">姓名 *</Label>
-        <Input id="name" {...form.register("name")} />
+        <Label htmlFor="name" className={LABEL_CLS}>姓名 *</Label>
+        <Input id="name" {...form.register("name")} className={INPUT_CLS} />
         {form.formState.errors.name && (
           <p className="text-sm text-destructive mt-1">
             {form.formState.errors.name.message}
@@ -59,12 +63,12 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }:
       </div>
 
       <div>
-        <Label>性別 *</Label>
+        <Label className={LABEL_CLS}>性別 *</Label>
         <Select
           value={form.watch("gender")}
           onValueChange={(v) => form.setValue("gender", v as "M" | "F")}
         >
-          <SelectTrigger>
+          <SelectTrigger className={INPUT_CLS}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -75,33 +79,34 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }:
       </div>
 
       <div>
-        <Label htmlFor="birthday">生日</Label>
+        <Label htmlFor="birthday" className={LABEL_CLS}>生日</Label>
         <Input
           id="birthday"
           type="date"
           {...form.register("birthday")}
+          className={INPUT_CLS}
         />
       </div>
 
       <div>
-        <Label htmlFor="phone">電話</Label>
-        <Input id="phone" {...form.register("phone")} />
+        <Label htmlFor="phone" className={LABEL_CLS}>電話</Label>
+        <Input id="phone" {...form.register("phone")} className={INPUT_CLS} />
       </div>
 
       <div>
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" {...form.register("email")} />
+        <Label htmlFor="email" className={LABEL_CLS}>Email</Label>
+        <Input id="email" type="email" {...form.register("email")} className={INPUT_CLS} />
       </div>
 
       <div>
-        <Label>目標 *</Label>
+        <Label className={LABEL_CLS}>目標 *</Label>
         <Select
           value={goal}
           onValueChange={(v) =>
             form.setValue("goal", v as StudentInput["goal"])
           }
         >
-          <SelectTrigger>
+          <SelectTrigger className={INPUT_CLS}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -115,8 +120,8 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }:
 
       {goal === "custom" && (
         <div>
-          <Label htmlFor="customGoal">自訂目標 *</Label>
-          <Input id="customGoal" {...form.register("customGoal")} />
+          <Label htmlFor="customGoal" className={LABEL_CLS}>自訂目標 *</Label>
+          <Input id="customGoal" {...form.register("customGoal")} className={INPUT_CLS} />
           {form.formState.errors.customGoal && (
             <p className="text-sm text-destructive mt-1">
               {form.formState.errors.customGoal.message}
@@ -126,33 +131,44 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存" }:
       )}
 
       <div>
-        <Label htmlFor="weeklyClassCount">每週上課次數 *</Label>
+        <Label htmlFor="weeklyClassCount" className={LABEL_CLS}>每週上課次數 *</Label>
         <Input
           id="weeklyClassCount"
           type="number"
           min="0"
           max="7"
           {...form.register("weeklyClassCount", { valueAsNumber: true })}
+          className={INPUT_CLS}
         />
       </div>
 
       <div>
-        <Label htmlFor="weeklyGymCount">每週可進健身房次數 *</Label>
+        <Label htmlFor="weeklyGymCount" className={LABEL_CLS}>每週可進健身房次數 *</Label>
         <Input
           id="weeklyGymCount"
           type="number"
           min="0"
           max="7"
           {...form.register("weeklyGymCount", { valueAsNumber: true })}
+          className={INPUT_CLS}
         />
       </div>
 
       <div>
-        <Label htmlFor="notes">備註（受傷史、過敏…）</Label>
-        <Textarea id="notes" rows={4} {...form.register("notes")} />
+        <Label htmlFor="notes" className={LABEL_CLS}>備註（受傷史、過敏…）</Label>
+        <Textarea
+          id="notes"
+          rows={4}
+          {...form.register("notes")}
+          className="bg-[var(--surface-1)] border-border resize-none"
+        />
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button
+        type="submit"
+        disabled={pending}
+        className="uppercase tracking-wider font-bold"
+      >
         {pending ? "儲存中…" : submitLabel}
       </Button>
     </form>

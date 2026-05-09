@@ -14,6 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 const num = { type: "number", step: "0.1" } as const;
 
+const LABEL_CLS =
+  "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block";
+const INPUT_CLS = "bg-[var(--surface-1)] border-border font-mono";
+const SECTION_HEADING_CLS =
+  "text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4";
+
 interface Props {
   studentId: number;
   onSubmit: (input: InBodyInput) => Promise<void>;
@@ -48,11 +54,16 @@ export function InBodyForm({ studentId, onSubmit }: Props) {
     >
       {/* 基本欄位 */}
       <section className="space-y-4">
-        <h3 className="font-semibold">基本</h3>
+        <h3 className={SECTION_HEADING_CLS}>基本</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="measuredAt">量測日期 *</Label>
-            <Input id="measuredAt" type="date" {...form.register("measuredAt")} />
+            <Label htmlFor="measuredAt" className={LABEL_CLS}>量測日期 *</Label>
+            <Input
+              id="measuredAt"
+              type="date"
+              {...form.register("measuredAt")}
+              className={INPUT_CLS}
+            />
             {form.formState.errors.measuredAt && (
               <p className="text-sm text-destructive mt-1">
                 {form.formState.errors.measuredAt.message}
@@ -60,28 +71,29 @@ export function InBodyForm({ studentId, onSubmit }: Props) {
             )}
           </div>
           <div>
-            <Label htmlFor="weightKg">體重 (kg)</Label>
-            <Input id="weightKg" {...num} {...numReg("weightKg")} />
+            <Label htmlFor="weightKg" className={LABEL_CLS}>體重 (kg)</Label>
+            <Input id="weightKg" {...num} {...numReg("weightKg")} className={INPUT_CLS} />
           </div>
           <div>
-            <Label htmlFor="bodyFatPct">體脂率 (%)</Label>
-            <Input id="bodyFatPct" {...num} {...numReg("bodyFatPct")} />
+            <Label htmlFor="bodyFatPct" className={LABEL_CLS}>體脂率 (%)</Label>
+            <Input id="bodyFatPct" {...num} {...numReg("bodyFatPct")} className={INPUT_CLS} />
           </div>
           <div>
-            <Label htmlFor="skeletalMuscleKg">骨骼肌量 (kg)</Label>
+            <Label htmlFor="skeletalMuscleKg" className={LABEL_CLS}>骨骼肌量 (kg)</Label>
             <Input
               id="skeletalMuscleKg"
               {...num}
               {...numReg("skeletalMuscleKg")}
+              className={INPUT_CLS}
             />
           </div>
           <div>
-            <Label htmlFor="bmi">BMI</Label>
-            <Input id="bmi" {...num} {...numReg("bmi")} />
+            <Label htmlFor="bmi" className={LABEL_CLS}>BMI</Label>
+            <Input id="bmi" {...num} {...numReg("bmi")} className={INPUT_CLS} />
           </div>
           <div>
-            <Label htmlFor="bmrKcal">BMR (kcal)</Label>
-            <Input id="bmrKcal" {...num} {...numReg("bmrKcal")} />
+            <Label htmlFor="bmrKcal" className={LABEL_CLS}>BMR (kcal)</Label>
+            <Input id="bmrKcal" {...num} {...numReg("bmrKcal")} className={INPUT_CLS} />
           </div>
         </div>
       </section>
@@ -91,99 +103,102 @@ export function InBodyForm({ studentId, onSubmit }: Props) {
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="text-sm text-primary hover:underline"
+          className="text-xs uppercase tracking-wider font-semibold text-amber-500 hover:underline"
         >
           {showAdvanced ? "▼" : "▶"} 進階欄位（部位分析、代謝細項）
         </button>
 
         {showAdvanced && (
-          <div className="space-y-6 pl-2 border-l-2">
+          <div className="space-y-6 pl-4 border-l-2 border-amber-500/30">
             <div>
-              <h4 className="font-medium mb-2">代謝</h4>
+              <h4 className={SECTION_HEADING_CLS}>代謝</h4>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="totalWaterL">全身水分 (L)</Label>
-                  <Input {...num} {...numReg("totalWaterL")} id="totalWaterL" />
+                  <Label htmlFor="totalWaterL" className={LABEL_CLS}>全身水分 (L)</Label>
+                  <Input {...num} {...numReg("totalWaterL")} id="totalWaterL" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="proteinKg">蛋白質 (kg)</Label>
-                  <Input {...num} {...numReg("proteinKg")} id="proteinKg" />
+                  <Label htmlFor="proteinKg" className={LABEL_CLS}>蛋白質 (kg)</Label>
+                  <Input {...num} {...numReg("proteinKg")} id="proteinKg" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="bodyFatKg">體脂量 (kg)</Label>
-                  <Input {...num} {...numReg("bodyFatKg")} id="bodyFatKg" />
+                  <Label htmlFor="bodyFatKg" className={LABEL_CLS}>體脂量 (kg)</Label>
+                  <Input {...num} {...numReg("bodyFatKg")} id="bodyFatKg" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="visceralFatLevel">內臟脂肪等級</Label>
+                  <Label htmlFor="visceralFatLevel" className={LABEL_CLS}>內臟脂肪等級</Label>
                   <Input
                     {...num}
                     {...numReg("visceralFatLevel")}
                     id="visceralFatLevel"
+                    className={INPUT_CLS}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="bodyAge">身體年齡</Label>
-                  <Input {...num} {...numReg("bodyAge")} id="bodyAge" />
+                  <Label htmlFor="bodyAge" className={LABEL_CLS}>身體年齡</Label>
+                  <Input {...num} {...numReg("bodyAge")} id="bodyAge" className={INPUT_CLS} />
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 className="font-medium mb-2">部位肌肉量 (kg)</h4>
+              <h4 className={SECTION_HEADING_CLS}>部位肌肉量 (kg)</h4>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="muscleLeftArm">左臂</Label>
-                  <Input {...num} {...numReg("muscleLeftArm")} id="muscleLeftArm" />
+                  <Label htmlFor="muscleLeftArm" className={LABEL_CLS}>左臂</Label>
+                  <Input {...num} {...numReg("muscleLeftArm")} id="muscleLeftArm" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="muscleRightArm">右臂</Label>
+                  <Label htmlFor="muscleRightArm" className={LABEL_CLS}>右臂</Label>
                   <Input
                     {...num}
                     {...numReg("muscleRightArm")}
                     id="muscleRightArm"
+                    className={INPUT_CLS}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="muscleTrunk">軀幹</Label>
-                  <Input {...num} {...numReg("muscleTrunk")} id="muscleTrunk" />
+                  <Label htmlFor="muscleTrunk" className={LABEL_CLS}>軀幹</Label>
+                  <Input {...num} {...numReg("muscleTrunk")} id="muscleTrunk" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="muscleLeftLeg">左腿</Label>
-                  <Input {...num} {...numReg("muscleLeftLeg")} id="muscleLeftLeg" />
+                  <Label htmlFor="muscleLeftLeg" className={LABEL_CLS}>左腿</Label>
+                  <Input {...num} {...numReg("muscleLeftLeg")} id="muscleLeftLeg" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="muscleRightLeg">右腿</Label>
+                  <Label htmlFor="muscleRightLeg" className={LABEL_CLS}>右腿</Label>
                   <Input
                     {...num}
                     {...numReg("muscleRightLeg")}
                     id="muscleRightLeg"
+                    className={INPUT_CLS}
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 className="font-medium mb-2">部位體脂量 (kg)</h4>
+              <h4 className={SECTION_HEADING_CLS}>部位體脂量 (kg)</h4>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="fatLeftArm">左臂</Label>
-                  <Input {...num} {...numReg("fatLeftArm")} id="fatLeftArm" />
+                  <Label htmlFor="fatLeftArm" className={LABEL_CLS}>左臂</Label>
+                  <Input {...num} {...numReg("fatLeftArm")} id="fatLeftArm" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="fatRightArm">右臂</Label>
-                  <Input {...num} {...numReg("fatRightArm")} id="fatRightArm" />
+                  <Label htmlFor="fatRightArm" className={LABEL_CLS}>右臂</Label>
+                  <Input {...num} {...numReg("fatRightArm")} id="fatRightArm" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="fatTrunk">軀幹</Label>
-                  <Input {...num} {...numReg("fatTrunk")} id="fatTrunk" />
+                  <Label htmlFor="fatTrunk" className={LABEL_CLS}>軀幹</Label>
+                  <Input {...num} {...numReg("fatTrunk")} id="fatTrunk" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="fatLeftLeg">左腿</Label>
-                  <Input {...num} {...numReg("fatLeftLeg")} id="fatLeftLeg" />
+                  <Label htmlFor="fatLeftLeg" className={LABEL_CLS}>左腿</Label>
+                  <Input {...num} {...numReg("fatLeftLeg")} id="fatLeftLeg" className={INPUT_CLS} />
                 </div>
                 <div>
-                  <Label htmlFor="fatRightLeg">右腿</Label>
-                  <Input {...num} {...numReg("fatRightLeg")} id="fatRightLeg" />
+                  <Label htmlFor="fatRightLeg" className={LABEL_CLS}>右腿</Label>
+                  <Input {...num} {...numReg("fatRightLeg")} id="fatRightLeg" className={INPUT_CLS} />
                 </div>
               </div>
             </div>
@@ -192,15 +207,20 @@ export function InBodyForm({ studentId, onSubmit }: Props) {
       </section>
 
       <div>
-        <Label htmlFor="coachNotes">教練筆記</Label>
+        <Label htmlFor="coachNotes" className={LABEL_CLS}>教練筆記</Label>
         <Textarea
           id="coachNotes"
           rows={3}
           {...form.register("coachNotes")}
+          className="bg-[var(--surface-1)] border-border resize-none"
         />
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button
+        type="submit"
+        disabled={pending}
+        className="uppercase tracking-wider font-bold"
+      >
         {pending ? "儲存中…" : "儲存 InBody 紀錄"}
       </Button>
     </form>

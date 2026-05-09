@@ -20,8 +20,15 @@ export default async function EditExercisePage({
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">編輯動作 — {ex.name}</h1>
+    <div className="container mx-auto px-6 py-10 max-w-3xl">
+      <header className="mb-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          EDIT EXERCISE
+        </p>
+        <h1 className="text-3xl font-extrabold tracking-tight mt-1">
+          {ex.name}
+        </h1>
+      </header>
       <ExerciseForm
         defaultValues={{
           name: ex.name,

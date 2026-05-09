@@ -8,13 +8,15 @@ export default async function NewInBodyPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const student = await getStudent(Number(id));
+  const { id: idStr } = await params;
+  const student = await getStudent(Number(idStr));
   if (!student) notFound();
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">新增 InBody 紀錄</h2>
+    <div className="space-y-6">
+      <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+        新增 InBody 紀錄
+      </h2>
       <InBodyForm studentId={student.id} onSubmit={createInBodyRecord} />
     </div>
   );
