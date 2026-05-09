@@ -65,3 +65,82 @@ export type Student = typeof students.$inferSelect;
 export type NewStudent = typeof students.$inferInsert;
 export type InBodyRecord = typeof inbodyRecords.$inferSelect;
 export type NewInBodyRecord = typeof inbodyRecords.$inferInsert;
+
+// ─── 訓練課相關 ─────────────────────────────────────────
+
+export const exercises = sqliteTable("exercises", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  nameEn: text("name_en"),
+  muscleGroup: text("muscle_group", {
+    enum: ["chest", "back", "legs", "shoulder", "arm", "core", "small_muscles"],
+  }).notNull(),
+  equipment: text("equipment"),
+  demoImageUrl: text("demo_image_url"),
+  description: text("description"),
+  isCustom: integer("is_custom", { mode: "boolean" }).notNull().default(false),
+  wgerId: integer("wger_id"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const sessions = sqliteTable("sessions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  studentId: integer("student_id")
+    .notNull()
+    .references(() => students.id),
+  sessionNumber: integer("session_number").notNull(), // 該學員的流水號
+  scheduledAt: text("scheduled_at"),
+  startedAt: text("started_at"),
+  endedAt: text("ended_at"),
+  targetMuscleGroups: text("target_muscle_groups", { mode: "json" })
+    .$type<string[]>()
+    .notNull(),
+  status: text("status", {
+    enum: ["scheduled", "in_progress", "completed"],
+  })
+    .notNull()
+    .default("scheduled"),
+  coachNotes: text("coach_notes"),
+  nextSessionDate: text("next_session_date"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const sessionExercises = sqliteTable("session_exercises", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  sessionId: integer("session_id")
+    .notNull()
+    .references(() => sessions.id, { onDelete: "cascade" }),
+  exerciseId: integer("exercise_id")
+    .notNull()
+    .references(() => exercises.id),
+  orderIndex: integer("order_index").notNull(),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const setLogs = sqliteTable("set_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  sessionExerciseId: integer("session_exercise_id")
+    .notNull()
+    .references(() => sessionExercises.id, { onDelete: "cascade" }),
+  setNumber: integer("set_number").notNull(),
+  weightKg: real("weight_kg"),
+  reps: integer("reps"),
+  rpe: integer("rpe"), // 1-10
+  toFailure: integer("to_failure", { mode: "boolean" }).notNull().default(false),
+  heartRateBpm: integer("heart_rate_bpm"),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export type Exercise = typeof exercises.$inferSelect;
+export type NewExercise = typeof exercises.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+export type SessionExercise = typeof sessionExercises.$inferSelect;
+export type NewSessionExercise = typeof sessionExercises.$inferInsert;
+export type SetLog = typeof setLogs.$inferSelect;
+export type NewSetLog = typeof setLogs.$inferInsert;
