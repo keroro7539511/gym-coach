@@ -275,4 +275,6 @@ export async function completeSession(sessionId: number, coachNotes?: string) {
     revalidatePath(`/students/${session.studentId}/sessions`);
   }
   revalidatePath(`/sessions/${sessionId}`);
+  // 跳到 done 頁，那裡會生成 weekly plan 然後再跳到編輯頁
+  redirect(`/sessions/${sessionId}/done`);
 }
