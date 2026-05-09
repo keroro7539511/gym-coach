@@ -8,10 +8,11 @@ import type { SetLog } from "@/lib/db/schema";
 
 interface Props {
   set: SetLog;
+  weightSuggestion: number | null;
   readOnly?: boolean;
 }
 
-export function SetRow({ set, readOnly = false }: Props) {
+export function SetRow({ set, weightSuggestion, readOnly = false }: Props) {
   const [local, setLocal] = useState({
     weightKg: set.weightKg ?? "",
     reps: set.reps ?? "",
@@ -57,7 +58,9 @@ export function SetRow({ set, readOnly = false }: Props) {
           onChange={(e) =>
             setLocal((l) => ({ ...l, weightKg: e.target.value }))
           }
-          placeholder="kg"
+          placeholder={
+            weightSuggestion != null ? `建議 ${weightSuggestion}kg` : "kg"
+          }
           className="w-24 text-center"
           disabled={readOnly}
         />

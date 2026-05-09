@@ -25,6 +25,7 @@ interface Props {
     sessionExercise: SessionExercise;
     exercise: Exercise;
     sets: SetLog[];
+    weightSuggestion: number | null;
   }[];
   allExercises: Exercise[];
   studentName: string;
@@ -59,75 +60,83 @@ export function SessionRecorder({
       </header>
 
       <div className="space-y-6">
-        {exercises.map(({ sessionExercise, exercise, sets }) => (
-          <div key={sessionExercise.id} className="border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-lg">{exercise.name}</h3>
+        {exercises.map(
+          ({ sessionExercise, exercise, sets, weightSuggestion }) => (
+            <div key={sessionExercise.id} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-lg">{exercise.name}</h3>
+                {!isCompleted && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      startTransition(() =>
+                        removeExerciseFromSession(
+                          sessionExercise.id,
+                          session.id
+                        )
+                      )
+                    }
+                    disabled={pending}
+                  >
+                    刪除動作
+                  </Button>
+                )}
+              </div>
+
+              <table className="w-full">
+                <thead>
+                  <tr className="text-xs text-muted-foreground">
+                    <th className="p-2">組</th>
+                    <th className="p-2">重量</th>
+                    <th className="p-2">次數</th>
+                    <th className="p-2">RPE</th>
+                    <th className="p-2">力竭</th>
+                    <th className="p-2">心率</th>
+                    <th className="p-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sets.map((s) => (
+                    <SetRow
+                      key={s.id}
+                      set={s}
+                      weightSuggestion={weightSuggestion}
+                      readOnly={isCompleted}
+                    />
+                  ))}
+                </tbody>
+              </table>
+
               {!isCompleted && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() =>
-                    startTransition(() =>
-                      removeExerciseFromSession(
-                        sessionExercise.id,
-                        session.id
-                      )
-                    )
-                  }
+                  className="mt-2"
+                  onClick={() => {
+                    // 新組數預設：繼承上一組；如果還沒有任何組，用建議重量
+                    const last = sets[sets.length - 1];
+                    startTransition(async () => {
+                      await createSetLog({
+                        sessionExerciseId: sessionExercise.id,
+                        setNumber: sets.length + 1,
+                        weightKg:
+                          last?.weightKg ?? weightSuggestion ?? null,
+                        reps: last?.reps ?? null,
+                        rpe: null,
+                        toFailure: false,
+                      });
+                      router.refresh();
+                    });
+                  }}
                   disabled={pending}
                 >
-                  刪除動作
+                  + 新增一組
                 </Button>
               )}
             </div>
-
-            <table className="w-full">
-              <thead>
-                <tr className="text-xs text-muted-foreground">
-                  <th className="p-2">組</th>
-                  <th className="p-2">重量</th>
-                  <th className="p-2">次數</th>
-                  <th className="p-2">RPE</th>
-                  <th className="p-2">力竭</th>
-                  <th className="p-2">心率</th>
-                  <th className="p-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sets.map((s) => (
-                  <SetRow key={s.id} set={s} readOnly={isCompleted} />
-                ))}
-              </tbody>
-            </table>
-
-            {!isCompleted && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => {
-                  // 新組數預設繼承上一組的 weight/reps
-                  const last = sets[sets.length - 1];
-                  startTransition(async () => {
-                    await createSetLog({
-                      sessionExerciseId: sessionExercise.id,
-                      setNumber: sets.length + 1,
-                      weightKg: last?.weightKg ?? null,
-                      reps: last?.reps ?? null,
-                      rpe: null,
-                      toFailure: false,
-                    });
-                    router.refresh();
-                  });
-                }}
-                disabled={pending}
-              >
-                + 新增一組
-              </Button>
-            )}
-          </div>
-        ))}
+          )
+        )}
 
         {!isCompleted && (
           <div className="flex gap-3">

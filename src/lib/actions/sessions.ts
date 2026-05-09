@@ -12,10 +12,11 @@ import {
   sessionStartInputSchema,
   type SessionStartInput,
 } from "@/lib/validators/session";
-import { eq, desc, asc, inArray, and } from "drizzle-orm";
+import { eq, desc, asc, inArray, and, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { recommendNextMuscleGroups } from "@/lib/recommendations/next-muscle-groups";
+import { suggestNextWeight } from "@/lib/recommendations/weight-suggestion";
 
 export async function startSession(input: SessionStartInput) {
   const parsed = sessionStartInputSchema.parse(input);
@@ -139,13 +140,44 @@ export async function getSessionWithDetails(sessionId: number) {
       .all();
   }
 
+  // 為每個動作算重量建議（取該學員上次同動作最後一組，但排除目前 session）
+  const exercisesWithSuggestion = exerciseRows.map(
+    ({ sessionExercise, exercise }) => {
+      const lastSet = db
+        .select({
+          weightKg: setLogs.weightKg,
+          rpe: setLogs.rpe,
+          toFailure: setLogs.toFailure,
+        })
+        .from(setLogs)
+        .innerJoin(
+          sessionExercises,
+          eq(setLogs.sessionExerciseId, sessionExercises.id)
+        )
+        .innerJoin(sessions, eq(sessionExercises.sessionId, sessions.id))
+        .where(
+          and(
+            eq(sessions.studentId, session.studentId),
+            eq(sessionExercises.exerciseId, exercise.id),
+            sql`${sessions.id} != ${sessionId}`
+          )
+        )
+        .orderBy(desc(sessions.sessionNumber), desc(setLogs.setNumber))
+        .limit(1)
+        .get();
+
+      return {
+        sessionExercise,
+        exercise,
+        sets: sets.filter((s) => s.sessionExerciseId === sessionExercise.id),
+        weightSuggestion: suggestNextWeight(lastSet ?? null),
+      };
+    }
+  );
+
   return {
     session,
-    exercises: exerciseRows.map(({ sessionExercise, exercise }) => ({
-      sessionExercise,
-      exercise,
-      sets: sets.filter((s) => s.sessionExerciseId === sessionExercise.id),
-    })),
+    exercises: exercisesWithSuggestion,
   };
 }
 
