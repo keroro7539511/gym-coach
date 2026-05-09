@@ -14,6 +14,9 @@ export function Nav() {
           <Link href="/exercises" className="hover:underline">
             動作主檔
           </Link>
+          <Link href="/settings" className="hover:underline">
+            設定
+          </Link>
         </div>
       </div>
     </nav>
