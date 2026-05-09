@@ -6,6 +6,7 @@ import {
   sessionExercises,
   setLogs,
   exercises,
+  students,
 } from "@/lib/db/schema";
 import {
   sessionStartInputSchema,
@@ -14,12 +15,7 @@ import {
 import { eq, desc, asc, inArray, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-const FIRST_THREE_MUSCLE_GROUPS: Record<number, string[]> = {
-  1: ["chest", "small_muscles"],
-  2: ["legs", "small_muscles"],
-  3: ["back", "small_muscles"],
-};
+import { recommendNextMuscleGroups } from "@/lib/recommendations/next-muscle-groups";
 
 export async function startSession(input: SessionStartInput) {
   const parsed = sessionStartInputSchema.parse(input);
@@ -34,11 +30,58 @@ export async function startSession(input: SessionStartInput) {
     .get();
   const sessionNumber = (last?.n ?? 0) + 1;
 
-  // muscle group：覆寫 > 前三堂硬編碼 > slice 3 才會做的建議引擎 > fallback
+  // 學員資料
+  const student = db
+    .select()
+    .from(students)
+    .where(eq(students.id, parsed.studentId))
+    .get();
+  if (!student) throw new Error("Student not found");
+
+  // 上次 session 的平均 RPE（用於降強度判斷）
+  let lastSessionAvgRpe: number | null = null;
+  if (sessionNumber > 1) {
+    const prevSession = db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.studentId, parsed.studentId),
+          eq(sessions.status, "completed")
+        )
+      )
+      .orderBy(desc(sessions.sessionNumber))
+      .limit(1)
+      .get();
+    if (prevSession) {
+      const rpes = db
+        .select({ rpe: setLogs.rpe })
+        .from(setLogs)
+        .innerJoin(
+          sessionExercises,
+          eq(setLogs.sessionExerciseId, sessionExercises.id)
+        )
+        .where(eq(sessionExercises.sessionId, prevSession.id))
+        .all();
+      const validRpes = rpes
+        .map((r) => r.rpe)
+        .filter((v): v is number => v != null);
+      if (validRpes.length > 0) {
+        lastSessionAvgRpe =
+          validRpes.reduce((a, b) => a + b, 0) / validRpes.length;
+      }
+    }
+  }
+
+  // 決定肌群：覆寫 > 規則
   const muscleGroups =
     parsed.targetMuscleGroups ??
-    FIRST_THREE_MUSCLE_GROUPS[sessionNumber] ??
-    ["chest"]; // slice 3 會用建議引擎取代
+    recommendNextMuscleGroups({
+      goal: student.goal,
+      sessionNumber,
+      weeklyClassCount: student.weeklyClassCount,
+      lastSessionAvgRpe,
+    });
 
   const result = db
     .insert(sessions)
