@@ -6,8 +6,7 @@ const STUDENT_COOKIE = "gs_student";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 天
 
 function getSecret() {
-  const s = process.env.JWT_SECRET;
-  if (!s) throw new Error("JWT_SECRET is not set");
+  const s = process.env.JWT_SECRET ?? "gym-coach-dev-secret-change-before-deploy";
   return new TextEncoder().encode(s);
 }
 
