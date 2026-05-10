@@ -37,7 +37,7 @@ export default async function StudentLayout({
           <PairingQR
             studentId={id}
             studentName={student.name}
-            appUrl={process.env.APP_URL ?? "http://localhost:3000"}
+            appUrl={process.env.APP_URL ?? "https://gym-coach-production-1f62.up.railway.app"}
           />
           <Link
             href={`/students/${id}/edit`}
