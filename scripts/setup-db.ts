@@ -73,6 +73,6 @@ const s1 = seedCoachSettings();
 console.log(s1.inserted ? "✓ Seeded coach_settings" : "  coach_settings already exists");
 
 const s2 = await seedExercises();
-console.log(`  exercises: ${s2.inserted} inserted, ${s2.skipped} skipped`);
+console.log(`  exercises: ${s2.inserted} inserted (source: ${s2.source})`);
 
 console.log("\n✅ Database ready");

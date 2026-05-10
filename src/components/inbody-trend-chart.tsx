@@ -84,7 +84,7 @@ function ChartCard({ data, dataKey, label, unit, color, decimals = 1 }: ChartCar
           <Tooltip
             contentStyle={TOOLTIP_STYLE}
             labelStyle={{ color: "#888", marginBottom: 4 }}
-            formatter={(v: number) => [`${v.toFixed(decimals)} ${unit.trim()}`, label]}
+            formatter={(v) => [`${Number(v).toFixed(decimals)} ${unit.trim()}`, label]}
           />
           <ReferenceLine y={first} stroke="#2a2a2a" strokeDasharray="4 4" />
           <Line

@@ -35,7 +35,7 @@ function Sparkline({ history }: { history: ExercisePR["history"] }) {
       <LineChart data={history} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
-          formatter={(v: number) => [`${v} kg`, ""]}
+          formatter={(v) => [`${v} kg`, ""]}
           labelFormatter={(_, payload) => payload?.[0]?.payload?.date ?? ""}
         />
         <Line
