@@ -13,6 +13,8 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "健身教練管理",
 };
