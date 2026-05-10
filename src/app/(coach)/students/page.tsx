@@ -79,7 +79,9 @@ export default async function StudentsPage() {
                   <TableCell className="text-muted-foreground">{s.gender === "M" ? "男" : "女"}</TableCell>
                   <TableCell>
                     <span className="text-amber-500 font-mono text-sm">
-                      {s.goal === "custom" ? s.customGoal : goalLabel[s.goal]}
+                      {(Array.isArray(s.goal) ? s.goal : [s.goal])
+                        .map((g) => g === "custom" ? (s.customGoal || "其他") : goalLabel[g])
+                        .join(" + ")}
                     </span>
                   </TableCell>
                   <TableCell className="font-mono">{s.weeklyClassCount} 次</TableCell>

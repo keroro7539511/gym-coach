@@ -141,6 +141,11 @@ export function WeeklyPlanEditor({ plan, days, studentName }: Props) {
                     上課
                   </span>
                 )}
+                {!d.isClassDay && d.isGymDay && (
+                  <span className="text-[9px] uppercase tracking-wider mt-0.5 font-bold text-emerald-500">
+                    健身
+                  </span>
+                )}
               </div>
             </TabsTrigger>
           ))}

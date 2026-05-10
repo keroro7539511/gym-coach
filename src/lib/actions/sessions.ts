@@ -16,6 +16,7 @@ import { eq, desc, asc, inArray, and, sql, isNotNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { recommendNextMuscleGroups } from "@/lib/recommendations/next-muscle-groups";
+import { primaryGoal } from "@/lib/recommendations/daily-activity";
 import { suggestNextWeight } from "@/lib/recommendations/weight-suggestion";
 
 export async function startSession(input: SessionStartInput) {
@@ -78,7 +79,7 @@ export async function startSession(input: SessionStartInput) {
   const muscleGroups =
     parsed.targetMuscleGroups ??
     recommendNextMuscleGroups({
-      goal: student.goal,
+      goal: primaryGoal(student.goal),
       sessionNumber,
       weeklyClassCount: student.weeklyClassCount,
       lastSessionAvgRpe,

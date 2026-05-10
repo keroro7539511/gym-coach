@@ -37,14 +37,15 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存", s
     defaultValues: {
       name: "",
       gender: "M",
-      goal: "muscle_gain",
+      goal: ["muscle_gain"] as ("muscle_gain" | "fat_loss" | "fitness" | "custom")[],
       weeklyClassCount: 1,
       weeklyGymCount: 3,
+      dietaryRestrictions: "",
       ...defaultValues,
     },
   });
 
-  const goal = form.watch("goal");
+  const goal = form.watch("goal") as string[];
 
   return (
     <form
@@ -100,26 +101,44 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存", s
       </div>
 
       <div>
-        <Label className={LABEL_CLS}>目標 *</Label>
-        <Select
-          value={goal}
-          onValueChange={(v) =>
-            form.setValue("goal", v as StudentInput["goal"])
-          }
-        >
-          <SelectTrigger className={INPUT_CLS}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="muscle_gain">增肌</SelectItem>
-            <SelectItem value="fat_loss">減脂</SelectItem>
-            <SelectItem value="fitness">體能</SelectItem>
-            <SelectItem value="custom">其他</SelectItem>
-          </SelectContent>
-        </Select>
+        <Label className={LABEL_CLS}>目標 * <span className="normal-case tracking-normal text-xs font-normal">（可多選）</span></Label>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { value: "muscle_gain", label: "增肌" },
+            { value: "fat_loss",    label: "減脂" },
+            { value: "fitness",     label: "體能" },
+            { value: "custom",      label: "其他" },
+          ] as const).map(({ value, label }) => {
+            const checked = goal?.includes(value) ?? false;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? goal.filter((g) => g !== value)
+                    : [...(goal ?? []), value];
+                  form.setValue("goal", next as StudentInput["goal"], { shouldValidate: true });
+                }}
+                className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
+                  checked
+                    ? "border-amber-500 bg-amber-500/10 text-amber-400"
+                    : "border-border bg-[var(--surface-1)] text-muted-foreground hover:border-amber-500/50"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {form.formState.errors.goal && (
+          <p className="text-sm text-destructive mt-1">
+            {form.formState.errors.goal.message as string}
+          </p>
+        )}
       </div>
 
-      {goal === "custom" && (
+      {goal?.includes("custom") && (
         <div>
           <Label htmlFor="customGoal" className={LABEL_CLS}>自訂目標 *</Label>
           <Input id="customGoal" {...form.register("customGoal")} className={INPUT_CLS} />
@@ -153,6 +172,18 @@ export function StudentForm({ defaultValues, onSubmit, submitLabel = "儲存", s
           {...form.register("weeklyGymCount", { valueAsNumber: true })}
           className={INPUT_CLS}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="dietaryRestrictions" className={LABEL_CLS}>飲食限制</Label>
+        <Textarea
+          id="dietaryRestrictions"
+          rows={3}
+          {...form.register("dietaryRestrictions")}
+          placeholder="例：素食、不吃牛肉、不吃香菜、乳糖不耐…"
+          className="bg-[var(--surface-1)] border-border resize-none"
+        />
+        <p className="text-xs text-muted-foreground mt-1">AI 生成飲食建議時會自動排除這些食物</p>
       </div>
 
       <div>

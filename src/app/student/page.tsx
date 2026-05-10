@@ -34,7 +34,9 @@ export default async function StudentDashboardPage() {
         <h1 className="text-3xl font-extrabold tracking-tight mt-1">{student.name}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           目標：<span className="text-amber-500 font-semibold">
-            {student.goal === "custom" ? student.customGoal : goalLabel[student.goal]}
+            {(Array.isArray(student.goal) ? student.goal : [student.goal])
+              .map((g) => g === "custom" ? (student.customGoal || "其他") : goalLabel[g])
+              .join(" + ")}
           </span>
         </p>
       </header>

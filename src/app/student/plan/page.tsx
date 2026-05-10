@@ -71,6 +71,11 @@ export default async function StudentPlanPage() {
                   上課日
                 </span>
               )}
+              {!day.isClassDay && day.isGymDay && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 rounded px-2 py-0.5">
+                  自主健身
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
@@ -87,6 +92,56 @@ export default async function StudentPlanPage() {
                 <Metric label="睡眠目標" value={`${day.sleepTargetHoursMin ?? "?"}–${day.sleepTargetHoursMax ?? "?"} 小時`} />
               )}
             </div>
+
+            {day.gymWorkout && day.gymWorkout.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3">
+                  {day.isClassDay ? "訓練計劃" : "自主健身計劃"}
+                </p>
+                <div className="space-y-2">
+                  {day.gymWorkout.map((block, i) => (
+                    <div key={i} className="rounded-lg bg-[var(--surface-3)] px-3 py-2.5">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 rounded px-2 py-0.5 shrink-0">
+                          {block.muscleGroup}
+                        </span>
+                        <span className="text-sm font-mono">
+                          {block.sets} 組 × {block.reps} 下
+                          {block.weightKg ? ` · ${block.weightKg} kg` : " · 徒手"}
+                          {" · "}休息 {block.restSeconds} 秒
+                        </span>
+                      </div>
+                      {block.notes && (
+                        <p className="text-xs text-muted-foreground mt-1.5 pl-1">{block.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(day.nutritionCaloriesKcal || day.nutritionProteinG || day.nutritionCarbsG || day.nutritionFatG) && (
+              <div className="mt-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">每日營養目標</p>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {day.nutritionCaloriesKcal && (
+                    <NutritionBadge label="熱量" value={`${day.nutritionCaloriesKcal}`} unit="kcal" color="amber" />
+                  )}
+                  {day.nutritionProteinG && (
+                    <NutritionBadge label="蛋白質" value={`${day.nutritionProteinG}`} unit="g" color="blue" />
+                  )}
+                  {day.nutritionCarbsG && (
+                    <NutritionBadge label="碳水" value={`${day.nutritionCarbsG}`} unit="g" color="green" />
+                  )}
+                  {day.nutritionFatG && (
+                    <NutritionBadge label="脂肪" value={`${day.nutritionFatG}`} unit="g" color="orange" />
+                  )}
+                  {day.nutritionFiberG && (
+                    <NutritionBadge label="纖維" value={`${day.nutritionFiberG}`} unit="g" color="teal" />
+                  )}
+                </div>
+              </div>
+            )}
 
             {(day.mealBreakfast || day.mealLunch || day.mealDinner || day.mealSnacks) && (
               <div className="mt-4 space-y-2">
@@ -123,6 +178,36 @@ function Metric({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg bg-[var(--surface-3)] px-3 py-2">
       <p className="text-[10px] text-muted-foreground mb-0.5">{label}</p>
       <p className="font-mono font-bold text-sm">{value}</p>
+    </div>
+  );
+}
+
+const COLOR_MAP: Record<string, string> = {
+  amber: "bg-amber-500/10 border-amber-500/30 text-amber-400",
+  blue: "bg-blue-500/10 border-blue-500/30 text-blue-400",
+  green: "bg-emerald-500/10 border-emerald-500/30 text-emerald-400",
+  orange: "bg-orange-500/10 border-orange-500/30 text-orange-400",
+  teal: "bg-teal-500/10 border-teal-500/30 text-teal-400",
+};
+
+function NutritionBadge({
+  label,
+  value,
+  unit,
+  color,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  color: string;
+}) {
+  return (
+    <div className={`rounded-lg border px-3 py-2 text-center ${COLOR_MAP[color] ?? COLOR_MAP.amber}`}>
+      <p className="text-[10px] text-muted-foreground mb-0.5">{label}</p>
+      <p className="font-mono font-bold text-sm">
+        {value}
+        <span className="text-[10px] font-normal ml-0.5">{unit}</span>
+      </p>
     </div>
   );
 }

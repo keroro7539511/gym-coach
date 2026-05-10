@@ -1,5 +1,14 @@
 export type Goal = "muscle_gain" | "fat_loss" | "fitness" | "custom";
 
+// 從多目標陣列取優先順序最高的單一目標（減脂 > 增肌 > 體能 > 其他）
+export function primaryGoal(goals: string | string[]): Goal {
+  const arr = Array.isArray(goals) ? goals : [goals];
+  if (arr.includes("fat_loss")) return "fat_loss";
+  if (arr.includes("muscle_gain")) return "muscle_gain";
+  if (arr.includes("fitness")) return "fitness";
+  return "custom";
+}
+
 export interface DailyActivityInput {
   goal: Goal;
   isClassDay: boolean;

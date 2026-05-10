@@ -24,7 +24,9 @@ export default async function StudentOverviewPage({
     { label: "EMAIL", value: student.email ?? "—", mono: true },
     {
       label: "目標",
-      value: student.goal === "custom" ? student.customGoal : goalLabel[student.goal],
+      value: (Array.isArray(student.goal) ? student.goal : [student.goal])
+        .map((g) => g === "custom" ? (student.customGoal || "其他") : goalLabel[g])
+        .join(" + "),
       accent: true,
     },
     { label: "每週上課", value: `${student.weeklyClassCount} 次`, mono: true },

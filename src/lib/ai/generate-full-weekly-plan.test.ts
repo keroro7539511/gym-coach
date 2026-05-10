@@ -21,6 +21,7 @@ const baseInput = {
     age: 30,
     goal: "減脂",
     weeklyClassCount: 2,
+    weeklyGymCount: 4,
   },
   inbody: {
     weightKg: 78,

@@ -36,10 +36,11 @@ export default async function EditStudentPage({
           birthday: student.birthday ?? undefined,
           phone: student.phone ?? undefined,
           email: student.email ?? undefined,
-          goal: student.goal,
+          goal: student.goal as ("muscle_gain" | "fat_loss" | "fitness" | "custom")[],
           customGoal: student.customGoal ?? undefined,
           weeklyClassCount: student.weeklyClassCount,
           weeklyGymCount: student.weeklyGymCount,
+          dietaryRestrictions: student.dietaryRestrictions ?? undefined,
           notes: student.notes ?? undefined,
         }}
         onSubmit={handle}

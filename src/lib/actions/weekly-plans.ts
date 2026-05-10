@@ -14,7 +14,7 @@ import {
 import { eq, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-import { recommendDailyActivity } from "@/lib/recommendations/daily-activity";
+import { recommendDailyActivity, primaryGoal } from "@/lib/recommendations/daily-activity";
 import {
   generateFullWeeklyPlan,
   type DaySpec,
@@ -24,8 +24,18 @@ import { getCoachSettings } from "@/lib/coach-settings";
 // ──────────────────────────────────────────────────
 // 從 Session.endedAt 推下週的 7 天
 function nextSevenDays(fromDate: string): { date: string; dayOfWeek: number }[] {
-  const start = new Date(fromDate);
-  start.setDate(start.getDate() + 1); // 隔天起算
+  // 課程結束日的隔天
+  const sessionNext = new Date(fromDate);
+  sessionNext.setDate(sessionNext.getDate() + 1);
+  sessionNext.setHours(0, 0, 0, 0);
+
+  // 今天
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 取較晚的日期，避免計劃涵蓋已過去的日期
+  const start = sessionNext > today ? sessionNext : today;
+
   const out: { date: string; dayOfWeek: number }[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
@@ -111,8 +121,10 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
         ? new Date().getFullYear() -
           new Date(student.birthday).getFullYear()
         : null,
-      goal: GOAL_LABEL[student.goal] ?? student.goal,
+      goal: (Array.isArray(student.goal) ? student.goal : [student.goal]).map((g) => GOAL_LABEL[g] ?? g).join("、"),
       weeklyClassCount: student.weeklyClassCount,
+      weeklyGymCount: student.weeklyGymCount,
+      dietaryRestrictions: student.dietaryRestrictions,
     },
     inbody: latestInbody
       ? {
@@ -156,6 +168,8 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
           date: d.date,
           dayOfWeek: d.dayOfWeek,
           isClassDay: d.isClassDay,
+          isGymDay: aiDay.isGymDay ?? false,
+          gymWorkout: aiDay.gymWorkout ?? [],
           walkingStepsTarget: aiDay.walkingStepsTarget,
           cardioMinutesTarget: aiDay.cardioMinutesTarget,
           mealBreakfast: aiDay.mealBreakfast || null,
@@ -165,6 +179,11 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
           waterTargetMl: aiDay.waterTargetMl,
           sleepTargetHoursMin: aiDay.sleepTargetHoursMin,
           sleepTargetHoursMax: aiDay.sleepTargetHoursMax,
+          nutritionCaloriesKcal: aiDay.nutritionCaloriesKcal,
+          nutritionProteinG: aiDay.nutritionProteinG,
+          nutritionCarbsG: aiDay.nutritionCarbsG,
+          nutritionFatG: aiDay.nutritionFatG,
+          nutritionFiberG: aiDay.nutritionFiberG,
           extraExercises: aiDay.extraExercises.map((ex) => ({
             exerciseId: null,
             name: ex.name,
@@ -177,7 +196,7 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
     } else {
       // fallback 規則
       const activity = recommendDailyActivity({
-        goal: student.goal,
+        goal: primaryGoal(student.goal),
         isClassDay: d.isClassDay,
         bmi: latestInbody?.bmi ?? null,
         muscleGainSteps: [
@@ -337,8 +356,10 @@ export async function regenerateWeeklyPlanAI(
       age: student.birthday
         ? new Date().getFullYear() - new Date(student.birthday).getFullYear()
         : null,
-      goal: GOAL_LABEL[student.goal] ?? student.goal,
+      goal: (Array.isArray(student.goal) ? student.goal : [student.goal]).map((g) => GOAL_LABEL[g] ?? g).join("、"),
       weeklyClassCount: student.weeklyClassCount,
+      weeklyGymCount: student.weeklyGymCount,
+      dietaryRestrictions: student.dietaryRestrictions,
     },
     inbody: latestInbody
       ? {
@@ -376,6 +397,8 @@ export async function regenerateWeeklyPlanAI(
     if (!dp) continue;
     db.update(dailyPlans)
       .set({
+        isGymDay: aiDay.isGymDay ?? false,
+        gymWorkout: aiDay.gymWorkout ?? [],
         walkingStepsTarget: aiDay.walkingStepsTarget,
         cardioMinutesTarget: aiDay.cardioMinutesTarget,
         mealBreakfast: aiDay.mealBreakfast || null,
@@ -385,6 +408,11 @@ export async function regenerateWeeklyPlanAI(
         waterTargetMl: aiDay.waterTargetMl,
         sleepTargetHoursMin: aiDay.sleepTargetHoursMin,
         sleepTargetHoursMax: aiDay.sleepTargetHoursMax,
+        nutritionCaloriesKcal: aiDay.nutritionCaloriesKcal,
+        nutritionProteinG: aiDay.nutritionProteinG,
+        nutritionCarbsG: aiDay.nutritionCarbsG,
+        nutritionFatG: aiDay.nutritionFatG,
+        nutritionFiberG: aiDay.nutritionFiberG,
         extraExercises: aiDay.extraExercises.map((ex) => ({
           exerciseId: null,
           name: ex.name,

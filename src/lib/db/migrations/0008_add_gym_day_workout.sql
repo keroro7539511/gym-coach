@@ -1,0 +1,2 @@
+ALTER TABLE daily_plans ADD COLUMN is_gym_day INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE daily_plans ADD COLUMN gym_workout TEXT;

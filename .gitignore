@@ -59,8 +59,10 @@ data/gym.db-wal
 data/backups/
 data/pdfs/
 local.db
+!data/.gitkeep
 
 # fonts (large, downloaded by postinstall)
 public/fonts/*.otf
 public/fonts/*.ttf
 !public/fonts/.gitkeep
+.superpowers/

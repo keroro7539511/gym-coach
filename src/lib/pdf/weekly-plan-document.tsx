@@ -45,6 +45,52 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     alignSelf: "flex-start",
   },
+  gymBadge: {
+    backgroundColor: "#d1fae5",
+    color: "#065f46",
+    fontSize: 9,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 2,
+    alignSelf: "flex-start",
+    marginLeft: 4,
+  },
+  muscleTag: {
+    backgroundColor: "#d1fae5",
+    color: "#065f46",
+    fontSize: 9,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 2,
+    marginRight: 6,
+  },
+  gymRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    marginBottom: 3,
+    flexWrap: "wrap" as const,
+  },
+  gymNote: {
+    fontSize: 8,
+    color: "#666",
+    marginLeft: 2,
+    marginBottom: 4,
+  },
+  nutritionGrid: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: 4,
+    marginBottom: 2,
+  },
+  nutritionItem: {
+    backgroundColor: "#f3f4f6",
+    borderRadius: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    minWidth: 58,
+  },
+  nutritionLabel: { fontSize: 7, color: "#888", marginBottom: 1 },
+  nutritionValue: { fontSize: 10, fontWeight: "bold" as const },
 });
 
 const DAY_LABEL = ["日", "一", "二", "三", "四", "五", "六"];
@@ -130,10 +176,41 @@ export function WeeklyPlanDocument({
             <Text style={styles.h1}>
               {d.date} · 星期{DAY_LABEL[d.dayOfWeek]}
             </Text>
-            {d.isClassDay && (
-              <Text style={styles.classBadge}>上課日</Text>
-            )}
+            <View style={{ flexDirection: "row" }}>
+              {d.isClassDay && (
+                <Text style={styles.classBadge}>上課日</Text>
+              )}
+              {!d.isClassDay && d.isGymDay && (
+                <Text style={styles.gymBadge}>自主健身</Text>
+              )}
+            </View>
           </View>
+
+          {/* 訓練計劃 */}
+          {d.gymWorkout && d.gymWorkout.length > 0 && (
+            <>
+              <Text style={styles.h2}>
+                {d.isClassDay ? "訓練計劃" : "自主健身計劃"}
+              </Text>
+              <View style={styles.card}>
+                {d.gymWorkout.map((block, i) => (
+                  <View key={i}>
+                    <View style={styles.gymRow}>
+                      <Text style={styles.muscleTag}>{block.muscleGroup}</Text>
+                      <Text>
+                        {block.sets} 組 × {block.reps} 下
+                        {block.weightKg != null ? `・${block.weightKg} kg` : "・徒手"}
+                        {`・休息 ${block.restSeconds} 秒`}
+                      </Text>
+                    </View>
+                    {block.notes ? (
+                      <Text style={styles.gymNote}>  ↳ {block.notes}</Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
 
           <Text style={styles.h2}>飲食</Text>
           <View style={styles.card}>
@@ -142,6 +219,44 @@ export function WeeklyPlanDocument({
             <Row label="晚餐" value={d.mealDinner} />
             <Row label="點心" value={d.mealSnacks} />
           </View>
+
+          {(d.nutritionCaloriesKcal || d.nutritionProteinG || d.nutritionCarbsG || d.nutritionFatG) && (
+            <>
+              <Text style={styles.h2}>每日營養目標</Text>
+              <View style={styles.nutritionGrid}>
+                {d.nutritionCaloriesKcal != null && (
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionLabel}>熱量</Text>
+                    <Text style={styles.nutritionValue}>{d.nutritionCaloriesKcal} kcal</Text>
+                  </View>
+                )}
+                {d.nutritionProteinG != null && (
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionLabel}>蛋白質</Text>
+                    <Text style={styles.nutritionValue}>{d.nutritionProteinG} g</Text>
+                  </View>
+                )}
+                {d.nutritionCarbsG != null && (
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionLabel}>碳水</Text>
+                    <Text style={styles.nutritionValue}>{d.nutritionCarbsG} g</Text>
+                  </View>
+                )}
+                {d.nutritionFatG != null && (
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionLabel}>脂肪</Text>
+                    <Text style={styles.nutritionValue}>{d.nutritionFatG} g</Text>
+                  </View>
+                )}
+                {d.nutritionFiberG != null && (
+                  <View style={styles.nutritionItem}>
+                    <Text style={styles.nutritionLabel}>纖維</Text>
+                    <Text style={styles.nutritionValue}>{d.nutritionFiberG} g</Text>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
 
           <Text style={styles.h2}>運動目標</Text>
           <View style={styles.card}>

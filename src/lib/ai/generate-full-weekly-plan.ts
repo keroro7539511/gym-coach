@@ -15,6 +15,8 @@ export interface FullPlanInput {
     age: number | null;
     goal: string;
     weeklyClassCount: number;
+    weeklyGymCount: number;
+    dietaryRestrictions?: string | null;
   };
   inbody: {
     weightKg: number | null;
@@ -31,8 +33,19 @@ export interface FullPlanInput {
   promptTemplate: string;
 }
 
+export interface GymExercise {
+  muscleGroup: string;
+  sets: number;
+  reps: number;
+  weightKg: number | null;
+  restSeconds: number;
+  notes: string | null;
+}
+
 export interface FullDayPlan {
   date: string;
+  isGymDay: boolean;
+  gymWorkout: GymExercise[];
   walkingStepsTarget: number;
   cardioMinutesTarget: number;
   mealBreakfast: string;
@@ -42,6 +55,11 @@ export interface FullDayPlan {
   waterTargetMl: number;
   sleepTargetHoursMin: number;
   sleepTargetHoursMax: number;
+  nutritionCaloriesKcal: number;
+  nutritionProteinG: number;
+  nutritionCarbsG: number;
+  nutritionFatG: number;
+  nutritionFiberG: number;
   extraExercises: { name: string; sets: number; reps: number }[];
 }
 
@@ -62,6 +80,22 @@ const SCHEMA: Schema = {
         type: SchemaType.OBJECT,
         properties: {
           date: { type: SchemaType.STRING },
+          isGymDay: { type: SchemaType.BOOLEAN },
+          gymWorkout: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                muscleGroup: { type: SchemaType.STRING },
+                sets: { type: SchemaType.INTEGER },
+                reps: { type: SchemaType.INTEGER },
+                weightKg: { type: SchemaType.NUMBER },
+                restSeconds: { type: SchemaType.INTEGER },
+                notes: { type: SchemaType.STRING },
+              },
+              required: ["muscleGroup", "sets", "reps", "weightKg", "restSeconds", "notes"],
+            },
+          },
           walkingStepsTarget: { type: SchemaType.INTEGER },
           cardioMinutesTarget: { type: SchemaType.INTEGER },
           mealBreakfast: { type: SchemaType.STRING },
@@ -71,6 +105,11 @@ const SCHEMA: Schema = {
           waterTargetMl: { type: SchemaType.INTEGER },
           sleepTargetHoursMin: { type: SchemaType.INTEGER },
           sleepTargetHoursMax: { type: SchemaType.INTEGER },
+          nutritionCaloriesKcal: { type: SchemaType.INTEGER },
+          nutritionProteinG: { type: SchemaType.INTEGER },
+          nutritionCarbsG: { type: SchemaType.INTEGER },
+          nutritionFatG: { type: SchemaType.INTEGER },
+          nutritionFiberG: { type: SchemaType.INTEGER },
           extraExercises: {
             type: SchemaType.ARRAY,
             items: {
@@ -86,6 +125,8 @@ const SCHEMA: Schema = {
         },
         required: [
           "date",
+          "isGymDay",
+          "gymWorkout",
           "walkingStepsTarget",
           "cardioMinutesTarget",
           "mealBreakfast",
@@ -95,6 +136,11 @@ const SCHEMA: Schema = {
           "waterTargetMl",
           "sleepTargetHoursMin",
           "sleepTargetHoursMax",
+          "nutritionCaloriesKcal",
+          "nutritionProteinG",
+          "nutritionCarbsG",
+          "nutritionFatG",
+          "nutritionFiberG",
           "extraExercises",
         ],
       },
@@ -162,7 +208,9 @@ function buildPrompt(input: FullPlanInput): string {
 - 性別：${input.student.gender === "M" ? "男" : "女"}
 - 年齡：${input.student.age ?? "未知"}
 - 目標：${input.student.goal}
-- 每週上課次數：${input.student.weeklyClassCount}
+- 每週上課次數（有教練）：${input.student.weeklyClassCount}
+- 每週可進健身房總次數：${input.student.weeklyGymCount}（其中 ${Math.max(0, input.student.weeklyGymCount - input.student.weeklyClassCount)} 天為自主訓練）
+- 飲食限制：${input.student.dietaryRestrictions?.trim() || "無"}
 
 最新 InBody：${inbody}
 InBody 變化：${input.inbodyDelta}
@@ -176,13 +224,28 @@ ${dayLines}
 1. overallMessage：100–150 字、純中文、給整週的話。要提到本次訓練亮點 + InBody 趨勢 + 下週重點。
 2. days：對應 7 天，每一筆需要：
    - date：與輸入一致
-   - walkingStepsTarget：步數（依目標 + 體脂 + BMI 調整。上課日步數 = 平日的一半）
-   - cardioMinutesTarget：有氧分鐘（增肌 0–15、減脂 20–40、體能 15–30；上課日 = 0）
+   - isGymDay：是否為自主健身日（true/false）。上課日（isClassDay）不重複計入；總 isGymDay=true 的天數 = 每週可進健身房次數 − 每週上課次數，不超過剩餘天數。安排原則：避開上課日、至少間隔一天休息。
+   - gymWorkout：isGymDay=true 時必填，否則空陣列。每筆為一個「訓練部位區塊」，不指定特定動作名稱，讓學員自行選擇器械式或自由重量：
+     * muscleGroup：訓練部位（例：胸、背、腿、肩、手臂、核心）
+     * sets：組數（通常 3–4）
+     * reps：每組次數（增肌 6–12、減脂 12–15、體能 15–20）
+     * weightKg：建議重量（kg）。徒手或無法估計時填 null。依 InBody 骨骼肌量與目標估算，寧可偏保守
+     * restSeconds：組間休息秒數（增肌 90–120、減脂 45–60、體能 30–45）
+     * notes：給學員的簡短提示（例：「可選推胸機或啞鈴，保持肩胛收緊」、「深蹲或腿推機皆可，注意膝蓋不超過腳尖」），15–30 字。無特別提示填空字串。
+     每個自主健身日安排 3–5 個部位區塊，避免連續兩天練同一部位（例：週二練胸肩 / 週四練背腿）
+   - walkingStepsTarget：步數（依目標 + 體脂 + BMI 調整。上課日和健身日步數 = 平日的一半）
+   - cardioMinutesTarget：有氧分鐘（增肌 0–15、減脂 20–40、體能 15–30；上課日和健身日 = 0）
    - mealBreakfast / mealLunch / mealDinner / mealSnacks：簡短可執行（例：「雞胸 150g + 糙米 1 碗 + 蔬菜」）
+     - 【重要】嚴格遵守學員飲食限制，禁止出現任何被排除的食材
      - 上課日熱量比平日 +10%
      - 蛋白質維持 1.6g/kg 體重
    - waterTargetMl：水分目標（依體重、流汗高峰日酌量增減）
    - sleepTargetHoursMin / sleepTargetHoursMax：睡眠時數區間
+   - nutritionCaloriesKcal：每日總熱量目標（kcal）。依 BMR × 活動係數計算，增肌 +200~300、減脂 -300~500、維持 ±0；上課日比平日 +150~200
+   - nutritionProteinG：蛋白質目標（g）。維持 1.6~2.0g × 體重 kg；若無體重資料依目標估算
+   - nutritionCarbsG：碳水化合物目標（g）。總熱量扣除蛋白質與脂肪後換算；上課日碳水比平日 +20~30g
+   - nutritionFatG：脂肪目標（g）。約佔總熱量 25~30%
+   - nutritionFiberG：膳食纖維目標（g）。一般建議 25~35g
    - extraExercises：補充小訓練（依本次訓練的薄弱點推 0–2 個動作；例：[{name:"棒式", sets:3, reps:30}]）。沒有就空陣列。
 
 語氣專業簡潔。額外指示：${input.promptTemplate}`;

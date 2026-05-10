@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getInBodyRecord } from "@/lib/actions/inbody";
 import { getStudent } from "@/lib/actions/students";
 import { generateBasicRecommendations } from "@/lib/recommendations/basic-inbody";
+import { primaryGoal } from "@/lib/recommendations/daily-activity";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { getCoachSettings } from "@/lib/coach-settings";
 import { Metric } from "@/components/ui/metric";
@@ -23,7 +24,7 @@ export default async function InBodyDetailPage({
   const settings = getCoachSettings();
   const recs = generateBasicRecommendations({
     gender: student.gender,
-    goal: student.goal,
+    goal: primaryGoal(student.goal),
     inbody: {
       weightKg: record.weightKg,
       bodyFatPct: record.bodyFatPct,

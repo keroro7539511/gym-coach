@@ -9,12 +9,11 @@ export const students = sqliteTable("students", {
   birthday: text("birthday"), // ISO date string
   phone: text("phone"),
   email: text("email"),
-  goal: text("goal", {
-    enum: ["muscle_gain", "fat_loss", "fitness", "custom"],
-  }).notNull(),
+  goal: text("goal", { mode: "json" }).$type<string[]>().notNull(),
   customGoal: text("custom_goal"),
   weeklyClassCount: integer("weekly_class_count").notNull(),
   weeklyGymCount: integer("weekly_gym_count").notNull(),
+  dietaryRestrictions: text("dietary_restrictions"),
   notes: text("notes"),
   deletedAt: text("deleted_at"),
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
@@ -175,6 +174,7 @@ export const dailyPlans = sqliteTable("daily_plans", {
   date: text("date").notNull(),
   dayOfWeek: integer("day_of_week").notNull(), // 0=Sun ... 6=Sat
   isClassDay: integer("is_class_day", { mode: "boolean" }).notNull().default(false),
+  isGymDay: integer("is_gym_day", { mode: "boolean" }).notNull().default(false),
   walkingStepsTarget: integer("walking_steps_target"),
   cardioMinutesTarget: integer("cardio_minutes_target"),
   mealBreakfast: text("meal_breakfast"),
@@ -184,6 +184,14 @@ export const dailyPlans = sqliteTable("daily_plans", {
   waterTargetMl: integer("water_target_ml"),
   sleepTargetHoursMin: integer("sleep_target_hours_min"),
   sleepTargetHoursMax: integer("sleep_target_hours_max"),
+  nutritionCaloriesKcal: integer("nutrition_calories_kcal"),
+  nutritionProteinG: integer("nutrition_protein_g"),
+  nutritionCarbsG: integer("nutrition_carbs_g"),
+  nutritionFatG: integer("nutrition_fat_g"),
+  nutritionFiberG: integer("nutrition_fiber_g"),
+  gymWorkout: text("gym_workout", { mode: "json" }).$type<
+    { muscleGroup: string; sets: number; reps: number; weightKg: number | null; restSeconds: number; notes: string | null }[]
+  >(),
   extraExercises: text("extra_exercises", { mode: "json" }).$type<
     { exerciseId: number | null; name: string; sets: number; reps: number }[]
   >(),
