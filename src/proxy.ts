@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const PUBLIC_PREFIXES = ["/login", "/pair", "/_next", "/favicon", "/fonts"];
+const PUBLIC_PREFIXES = ["/login", "/pair", "/_next", "/favicon", "/fonts", "/api/health"];
 
 function getSecret() {
   const s = process.env.JWT_SECRET ?? "gym-coach-dev-secret-change-before-deploy";
