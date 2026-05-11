@@ -20,31 +20,28 @@ import {
   type DaySpec,
 } from "@/lib/ai/generate-full-weekly-plan";
 import { getCoachSettings } from "@/lib/coach-settings";
+import { todayTW } from "@/lib/utils/date-tw";
 
 // ──────────────────────────────────────────────────
-// 從 Session.endedAt 推下週的 7 天
+// 從 Session.endedAt 推下週的 7 天（日期以台灣時間為準）
 function nextSevenDays(fromDate: string): { date: string; dayOfWeek: number }[] {
+  const todayStr = todayTW(); // YYYY-MM-DD 台灣今天
+
   // 課程結束日的隔天
-  const sessionNext = new Date(fromDate);
-  sessionNext.setDate(sessionNext.getDate() + 1);
-  sessionNext.setHours(0, 0, 0, 0);
+  const sessionNextDate = new Date(fromDate + "T00:00:00+08:00");
+  sessionNextDate.setDate(sessionNextDate.getDate() + 1);
+  const sessionNextStr = sessionNextDate.toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
 
-  // 今天
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 取較晚的日期，避免計劃涵蓋已過去的日期
-  const start = sessionNext > today ? sessionNext : today;
+  // 取較晚的日期
+  const startStr = sessionNextStr > todayStr ? sessionNextStr : todayStr;
 
   const out: { date: string; dayOfWeek: number }[] = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    const dayOfWeek = d.getDay();
-    out.push({
-      date: d.toISOString().slice(0, 10),
-      dayOfWeek,
-    });
+    const d = new Date(startStr + "T00:00:00+08:00");
+    d.setDate(d.getDate() + i);
+    const dateStr = d.toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
+    const dayOfWeek = new Date(dateStr + "T12:00:00+08:00").getDay();
+    out.push({ date: dateStr, dayOfWeek });
   }
   return out;
 }

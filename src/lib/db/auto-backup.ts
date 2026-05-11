@@ -2,6 +2,10 @@ import "server-only";
 import { copyFile, mkdir, readdir, stat, unlink } from "fs/promises";
 import path from "path";
 
+function todayTW(): string {
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
+}
+
 const DB_FILE = path.join(process.cwd(), "data", "gym.db");
 const BACKUP_DIR = path.join(process.cwd(), "data", "backups");
 const RETAIN_DAYS = 30;
@@ -9,7 +13,7 @@ const RETAIN_DAYS = 30;
 export async function ensureDailyBackup() {
   try {
     await mkdir(BACKUP_DIR, { recursive: true });
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const today = todayTW(); // YYYY-MM-DD 台灣時間
     const dest = path.join(BACKUP_DIR, `gym-${today}.db`);
 
     // 今日已備份就跳過
