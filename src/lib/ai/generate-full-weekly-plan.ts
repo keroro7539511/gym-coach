@@ -224,8 +224,10 @@ ${dayLines}
 1. overallMessage：100–150 字、純中文、給整週的話。要提到本次訓練亮點 + InBody 趨勢 + 下週重點。
 2. days：對應 7 天，每一筆需要：
    - date：與輸入一致
-   - isGymDay：是否為自主健身日（true/false）。上課日（isClassDay）不重複計入；總 isGymDay=true 的天數 = 每週可進健身房次數 − 每週上課次數，不超過剩餘天數。安排原則：避開上課日、至少間隔一天休息。
-   - gymWorkout：isGymDay=true 時必填，否則空陣列。每筆為一個「訓練部位區塊」，不指定特定動作名稱，讓學員自行選擇器械式或自由重量：
+   - isGymDay：當天是否去健身房（true/false）。上課日（isClassDay=true）一律設為 true；另外再從非上課日中安排（weeklyGymCount - weeklyClassCount）天自主訓練日，也設為 true。安排原則：自主訓練日避免連續兩天、至少間隔一天休息。
+   - gymWorkout：
+     * 上課日（isClassDay=true）：固定為空陣列，由教練現場指導，不預先安排
+     * 自主健身日（isGymDay=true 且非上課日）：必填，每筆為一個「訓練部位區塊」，不指定特定動作名稱，讓學員自行選擇器械式或自由重量：
      * muscleGroup：訓練部位（例：胸、背、腿、肩、手臂、核心）
      * sets：組數（通常 3–4）
      * reps：每組次數（增肌 6–12、減脂 12–15、體能 15–20）
