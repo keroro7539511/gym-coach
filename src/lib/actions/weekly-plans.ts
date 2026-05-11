@@ -87,6 +87,7 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
   const sessionDate = (
     session.endedAt ?? session.startedAt ?? new Date().toISOString()
   ).slice(0, 10);
+  const sessionDayOfWeek = new Date(sessionDate + "T12:00:00+08:00").getDay();
   const days = nextSevenDays(sessionDate);
   const startDate = days[0].date;
   const endDate = days[6].date;
@@ -102,11 +103,11 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
   const latestInbody = recentInbody[0];
   const prevInbody = recentInbody[1];
 
-  // 組成 dailyPlans 結構（含上課日標記）
+  // 組成 dailyPlans 結構（上課日以本次課程星期幾為基準推算）
   const daySpecs: DaySpec[] = days.map((d) => ({
     date: d.date,
     dayOfWeek: d.dayOfWeek,
-    isClassDay: simulateClassDay(d.dayOfWeek, student.weeklyClassCount),
+    isClassDay: isClassDayOfWeek(d.dayOfWeek, sessionDayOfWeek, student.weeklyClassCount),
   }));
 
   // AI 呼叫
@@ -232,17 +233,14 @@ export async function generateWeeklyPlan(sessionId: number): Promise<number> {
   return weeklyPlanId;
 }
 
-function simulateClassDay(dayOfWeek: number, weeklyCount: number): boolean {
-  // 簡化邏輯：把上課日大致分散
-  // weeklyCount=1 → 只有星期三
-  // weeklyCount=2 → 星期二、五
-  // weeklyCount=3 → 星期一、三、五
-  // 4+ → 星期一、三、五、六
+// 以本次課程的星期幾為基準，均勻分配每週上課日
+function isClassDayOfWeek(dayOfWeek: number, sessionDayOfWeek: number, weeklyCount: number): boolean {
   if (weeklyCount <= 0) return false;
-  if (weeklyCount === 1) return dayOfWeek === 3;
-  if (weeklyCount === 2) return dayOfWeek === 2 || dayOfWeek === 5;
-  if (weeklyCount === 3) return [1, 3, 5].includes(dayOfWeek);
-  return [1, 3, 5, 6].includes(dayOfWeek);
+  const classDays: number[] = [];
+  for (let i = 0; i < Math.min(weeklyCount, 7); i++) {
+    classDays.push((sessionDayOfWeek + Math.round(i * 7 / weeklyCount)) % 7);
+  }
+  return classDays.includes(dayOfWeek);
 }
 
 async function summarizeSession(sessionId: number): Promise<string> {
