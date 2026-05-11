@@ -241,10 +241,13 @@ ${dayLines}
      - 蛋白質維持 1.6g/kg 體重
    - waterTargetMl：水分目標（依體重、流汗高峰日酌量增減）
    - sleepTargetHoursMin / sleepTargetHoursMax：睡眠時數區間
-   - nutritionCaloriesKcal：每日總熱量目標（kcal）。依 BMR × 活動係數計算，增肌 +200~300、減脂 -300~500、維持 ±0；上課日比平日 +150~200
-   - nutritionProteinG：蛋白質目標（g）。維持 1.6~2.0g × 體重 kg；若無體重資料依目標估算
-   - nutritionCarbsG：碳水化合物目標（g）。總熱量扣除蛋白質與脂肪後換算；上課日碳水比平日 +20~30g
-   - nutritionFatG：脂肪目標（g）。約佔總熱量 25~30%
+   - nutritionCaloriesKcal：每日總熱量目標（kcal）。基礎為 BMR × 活動係數，再依目標調整（增肌 +200~300、減脂 -300~500、維持 ±0）。日類型加成：
+     * 上課日（isClassDay）：比平日基礎再 +250~350 kcal（有教練帶訓，強度高）
+     * 自主健身日（isGymDay=true）：比平日基礎再 +150~250 kcal（自主訓練消耗）
+     * 休息日：基礎值不加成
+   - nutritionProteinG：蛋白質目標（g）。基礎 1.6~2.0g × 體重 kg；訓練日（上課日或自主健身日）比休息日再 +10~15g，加速肌肉修復
+   - nutritionCarbsG：碳水化合物目標（g）。總熱量扣除蛋白質與脂肪後換算；訓練日（上課日或自主健身日）比休息日 +25~40g 補充肌糖原
+   - nutritionFatG：脂肪目標（g）。約佔總熱量 25~30%；訓練日脂肪量維持不變，熱量加成主要來自碳水與蛋白質
    - nutritionFiberG：膳食纖維目標（g）。一般建議 25~35g
    - extraExercises：補充小訓練（依本次訓練的薄弱點推 0–2 個動作；例：[{name:"棒式", sets:3, reps:30}]）。沒有就空陣列。
 
