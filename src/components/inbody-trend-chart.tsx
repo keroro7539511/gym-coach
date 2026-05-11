@@ -107,7 +107,14 @@ function ChartCard({ data, dataKey, label, unit, color, decimals = 1 }: ChartCar
 }
 
 export function InBodyTrendChart({ records }: Props) {
-  if (records.length < 2) return null;
+  if (records.length === 0) return null;
+  if (records.length < 2) {
+    return (
+      <p className="text-xs text-muted-foreground py-2">
+        需要至少 2 筆紀錄才能顯示趨勢圖
+      </p>
+    );
+  }
 
   const data = [...records]
     .reverse()
