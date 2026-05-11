@@ -15,23 +15,23 @@ function generateToken(): string {
 }
 
 export async function createPairingToken(studentId: number): Promise<string> {
-  // 讓舊 token 作廢
+  const now = new Date().toISOString();
+
+  // 若已有有效（未使用且未過期）token，直接回傳，避免讓學員手上的連結失效
   const existing = db
     .select()
     .from(pairingTokens)
-    .where(
-      and(eq(pairingTokens.studentId, studentId), isNull(pairingTokens.usedAt))
-    )
+    .where(and(eq(pairingTokens.studentId, studentId), isNull(pairingTokens.usedAt)))
     .all();
 
-  // 刪除未使用的舊 token
   for (const t of existing) {
+    if (t.expiresAt > now) return t.token;
+    // 過期的才刪除
     db.delete(pairingTokens).where(eq(pairingTokens.id, t.id)).run();
   }
 
   const token = generateToken();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
   db.insert(pairingTokens).values({ studentId, token, expiresAt }).run();
   return token;
 }
