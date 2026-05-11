@@ -226,7 +226,7 @@ ${dayLines}
    - date：與輸入一致
    - isGymDay：當天是否去健身房（true/false）。上課日（isClassDay=true）一律設為 true；另外再從非上課日中安排（weeklyGymCount - weeklyClassCount）天自主訓練日，也設為 true。安排原則：自主訓練日避免連續兩天、至少間隔一天休息。
    - gymWorkout：
-     * 上課日（isClassDay=true）：固定為空陣列，由教練現場指導，不預先安排
+     * 上課日（isClassDay=true）：依照「本次訓練紀錄」的動作內容填入。將每個動作歸類到對應部位（muscleGroup），組數/次數/重量直接沿用紀錄中的數值，restSeconds 依強度估算，notes 填簡短提示或空字串。若同一部位有多個動作，合併為一個區塊並在 notes 中說明。
      * 自主健身日（isGymDay=true 且非上課日）：必填，每筆為一個「訓練部位區塊」，不指定特定動作名稱，讓學員自行選擇器械式或自由重量：
      * muscleGroup：訓練部位（例：胸、背、腿、肩、手臂、核心）
      * sets：組數（通常 3–4）
